@@ -1,9 +1,19 @@
-FOLDERS = $(notdir $(shell find challenges -type d -not -path "*.git*"))
+CURDIR = $(shell pwd)
+DOCKER=docker run -it -v $(CURDIR):/root/advent:rw advent-cpp
+CHALLENGE?=1
+CPPFILES = ./challenges/challenge$(CHALLENGE)/main.cpp
+run: static-analysis
+		./test
 
-CPPCHECK ?= 1
-.PHONY: $(FOLDERS)
-$(FOLDERS):
-		g++-7 -std=c++17 -Wall -Werror -Icommon $(shell find challenges/$@ common -name *.cpp) -o solution && ./solution
-		cppcheck $(FOLDERS) --enable=style --enable=warning -Icommon --error-exitcode=1 -q
-		
-		
+static-analysis: build
+		$(DOCKER) cppcheck --std=c++11 $(CPPFILES) --enable=all -q -Icommon --error-exitcode=1 && \
+		$(DOCKER) clang-tidy $(CPPFILES) --checks="*" --warnings-as-errors="*" -- -Icommon -std=c++1z
+
+build:
+		$(DOCKER) g++-7 -g $(CPPFILES) -Icommon -std=c++17 -o test -Werror -Wall -Wextra -pedantic
+
+docker:
+		docker build -t advent-cpp .
+
+shell:
+		$(DOCKER) /bin/bash
