@@ -26,7 +26,7 @@ int main(){
     std::ifstream infile("input.txt");
     std::copy(std::istream_iterator<int>(infile),
               std::istream_iterator<int>(),
-	      std::back_inserter(allChanges));
+              std::back_inserter(allChanges));
 
     std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << std::endl;
     std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << std::endl;
