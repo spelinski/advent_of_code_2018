@@ -5,9 +5,9 @@
 #include <vector>
 #include <iterator>
 
-int findSumSeenTwice(std::vector<int> changes) {
+int findSumSeenTwice(const std::vector<int>& changes) {
     std::set<int> sumsHit = {0};
-    std::vector<int>::iterator it = changes.begin();
+    std::vector<int>::const_iterator it = changes.begin();
     int sum = 0;
     while(true) {
 	if(it == changes.end()) { it = changes.begin(); }
