@@ -7,7 +7,7 @@
 
 int findSumSeenTwice(const std::vector<int>& changes) {
     std::set<int> sumsHit = {0};
-    std::vector<int>::const_iterator it = changes.begin();
+    auto it = changes.begin();
     int sum = 0;
     while(true) {
         if(it == changes.end()) { it = changes.begin(); }
@@ -28,7 +28,7 @@ int main(){
               std::istream_iterator<int>(),
               std::back_inserter(allChanges));
 
-    std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << std::endl;
-    std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << std::endl;
-    return 1;
+    std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << "\n";
+    std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << "\n";
+    return 0;
 }
