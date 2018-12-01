@@ -1,17 +1,34 @@
-//THIS IS A SAMPLE TO TO GET MAKEFILE WORKING BEFORE ADVENT STARTS
-#include "sum.h"
-#include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <numeric>
+#include <set>
 #include <vector>
+#include <iterator>
+
+int findSumSeenTwice(std::vector<int> changes) {
+    std::set<int> sumsHit = {0};
+    std::vector<int>::iterator it = changes.begin();
+    int sum = 0;
+    while(true) {
+	if(it == changes.end()) { it = changes.begin(); }
+        sum += *it;
+	++it;
+        if(sumsHit.find(sum) != sumsHit.end()) {
+            return sum;
+        }
+        sumsHit.insert(sum);
+    }
+    return 0;
+}
 
 int main(){
-    std::cout << "Please enter in an upper limit (up to 2^32)\n";
-    auto limit = 0u;
-    std::cin >> limit;
+    std::vector<int> allChanges;
+    std::ifstream infile("input.txt");
+    std::copy(std::istream_iterator<int>(infile),
+              std::istream_iterator<int>(),
+	      std::back_inserter(allChanges));
 
-    auto sum = temp::user_sum(limit);
-
-    std::cout << "The sum total is " << sum << "\n";
-    return 0;
+    std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << std::endl;
+    std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << std::endl;
+    return 1;
 }
