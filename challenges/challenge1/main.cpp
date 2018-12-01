@@ -10,7 +10,7 @@ int findSumSeenTwice(const std::vector<int>& changes) {
     std::vector<int>::const_iterator it = changes.begin();
     int sum = 0;
     while(true) {
-    if(it == changes.end()) { it = changes.begin(); }
+        if(it == changes.end()) { it = changes.begin(); }
         sum += *it;
         ++it;
         if(sumsHit.find(sum) != sumsHit.end()) {
