@@ -1,5 +1,5 @@
 CURDIR = $(shell pwd)
-DOCKER=docker run -it -v $(CURDIR):/root/advent:rw advent-cpp
+DOCKER=sudo docker run -it -v $(CURDIR):/root/advent:rw advent-cpp
 CHALLENGE?=1
 CPPFILES = ./challenges/challenge$(CHALLENGE)/main.cpp
 run: static-analysis
@@ -13,7 +13,7 @@ build:
 		$(DOCKER) g++-7 -g $(CPPFILES) -Icommon -std=c++17 -o test -Werror -Wall -Wextra -pedantic
 
 docker:
-		docker build -t advent-cpp .
+		sudo docker build -t advent-cpp .
 
 shell:
 		$(DOCKER) /bin/bash

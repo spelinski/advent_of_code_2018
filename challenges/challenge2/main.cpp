@@ -1,13 +1,18 @@
+#include "fileParser.h"
+#include "stringParser.h"
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include "fileParser.h"
-#include "stringParser.h"
+
+bool hasNumberOfSameLetter(const std::string& inputString, const int sameLetterMatch) {
+    std::map<char, int> letterFreqs= stringParse::getLetterFrequencies(inputString);
+    return std::any_of(letterFreqs.begin(), letterFreqs.end(), [&sameLetterMatch](std::pair<char, int> freq){return (freq.second == sameLetterMatch);});
+}
 
 int numWordsWithNumSameLetters(std::vector<std::string> ids, int dupTarget) {
     return std::count_if(ids.begin(), ids.end(),
             [&dupTarget](std::string boxId) { 
-                return stringParse::hasNumberOfSameLetter(boxId, dupTarget); 
+                return hasNumberOfSameLetter(boxId, dupTarget); 
             });
 }
 
@@ -37,8 +42,7 @@ std::string getSamePartOfStringsOffByOne(std::vector<std::string> ids) {
 }
 
 int main() {
-    std::vector<std::string> allIds;
-    fileParse::storeEachLine("./challenges/challenge2/input.txt", allIds);
+    std::vector<std::string> allIds = fileParse::storeEachLine<std::string>("./challenges/challenge2/input.txt");
     int doubleCount = numWordsWithNumSameLetters(allIds, 2);
     int tripleCount = numWordsWithNumSameLetters(allIds, 3);
     int captcha = doubleCount * tripleCount;
