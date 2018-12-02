@@ -1,9 +1,9 @@
 #include <iostream>
-#include <fstream>
 #include <numeric>
 #include <set>
 #include <vector>
 #include <iterator>
+#include "fileParser.h"
 
 int findSumSeenTwice(const std::vector<int>& changes) {
     std::set<int> sumsHit = {0};
@@ -23,10 +23,7 @@ int findSumSeenTwice(const std::vector<int>& changes) {
 
 int main(){
     std::vector<int> allChanges;
-    std::ifstream infile("input.txt");
-    std::copy(std::istream_iterator<int>(infile),
-              std::istream_iterator<int>(),
-              std::back_inserter(allChanges));
+    fileParse::storeEachLine("./challenges/challenge1/input.txt", allChanges);
 
     std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << "\n";
     std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << "\n";
