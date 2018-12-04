@@ -42,7 +42,7 @@ std::string getSamePartOfStringsOffByOne(std::vector<std::string> ids) {
 }
 
 int main() {
-    std::vector<std::string> allIds = fileParse::storeEachLine<std::string>("./challenges/challenge2/input.txt");
+    std::vector<std::string> allIds = fileParse::storeEachWord<std::string>("./challenges/challenge2/input.txt");
     int doubleCount = numWordsWithNumSameLetters(allIds, 2);
     int tripleCount = numWordsWithNumSameLetters(allIds, 3);
     int captcha = doubleCount * tripleCount;

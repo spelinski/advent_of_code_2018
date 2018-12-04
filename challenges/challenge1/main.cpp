@@ -22,7 +22,7 @@ int findSumSeenTwice(const std::vector<int>& changes) {
 }
 
 int main(){
-    std::vector<int> allChanges = fileParse::storeEachLine<int>("./challenges/challenge1/input.txt");
+    std::vector<int> allChanges = fileParse::storeEachWord<int>("./challenges/challenge1/input.txt");
 
     std::cout << "Sum of Numbers: " << std::accumulate(allChanges.begin(), allChanges.end(), 0) << "\n";
     std::cout << "Sum seen twice: " << findSumSeenTwice(allChanges) << "\n";
