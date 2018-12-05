@@ -69,16 +69,12 @@ namespace elfPlan {
             }
 
             int getInchesDuplicated(){
-                return std::count_if(usageMap.begin(),usageMap.end(),isDuplicated);
+                return std::count_if(usageMap.begin(),usageMap.end(),[](auto inch){return (inch.second > 1);});
             }
 
         private:
             std::vector<elfPlan> allPlans;
             std::map<Point, int> usageMap;
-            static bool isDuplicated(std::pair<Point, int> inch) {
-                return (inch.second > 1);
-            }
-
     };
 
 }
