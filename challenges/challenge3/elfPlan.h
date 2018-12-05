@@ -1,6 +1,11 @@
+#include <algorithm>
+#include <map>
 #include <utility>
+#include <vector>
 
 namespace elfPlan {
+
+    typedef std::pair<int,int> Point;
 
     struct planId {
         explicit planId(int id):id(id){}
@@ -22,17 +27,58 @@ namespace elfPlan {
         int distance;
     };
 
-    class elfPlan{
+    struct elfPlan{
         public:
             elfPlan(planId id, initPoint sp, xDist xDistance, yDist yDistance):id(id.id),startPoint(sp.point),xDistance(xDistance.distance),yDistance(yDistance.distance) {}
-            std::pair<int,int> getStartPoint() const {return startPoint;}
-            int getId() const {return id;}
-            int getXDistance() const {return xDistance;}
-            int getYDistance() const {return yDistance;}
+            template<typename T>
+            void performOperationWithEachPoint(T oper){
+                auto [startX,startY] = startPoint;
+                for(int x = startX; x < (startX+xDistance); ++x){
+                    for(int y = startY; y < (startY+yDistance); ++y){
+                        oper(Point(x,y));
+                    }
+                }
+            }
+            int getId(){return id;}
         private:
             int id;
-            std::pair<int,int> startPoint;
+            Point startPoint;
             int xDistance;
             int yDistance;
     };
+
+    class elfPlanHandler{
+        public:
+            elfPlanHandler(){}
+            void insert(elfPlan newPlan){
+                auto incrementUsages = [&](Point curPoint){usageMap[curPoint] += 1;};
+                newPlan.performOperationWithEachPoint(incrementUsages);
+                allPlans.push_back(newPlan);
+            }
+
+            int getUniquePlan() {
+                for(auto& plan : allPlans) {
+                    bool unique = true;
+                    auto checkUnique = [&](Point curPoint){if(usageMap[curPoint] > 1) {unique = false;}};
+                    plan.performOperationWithEachPoint(checkUnique);
+                    if(unique) {
+                        return plan.getId();
+                    }
+                }
+                return 0;
+            }
+
+            int getInchesDuplicated(){
+                return std::count_if(usageMap.begin(),usageMap.end(),isDuplicated);
+            }
+
+        private:
+            std::vector<elfPlan> allPlans;
+            std::map<Point, int> usageMap;
+            static bool isDuplicated(std::pair<Point, int> inch) {
+                return (inch.second > 1);
+            }
+
+    };
+
 }

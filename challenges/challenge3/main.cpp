@@ -1,78 +1,33 @@
 #include "elfPlan.h"
 #include "fileParser.h"
-#include <algorithm>
 #include <iostream>
-#include <map>
 #include <regex>
-#include <sstream>
 #include <string>
+#include <vector>
 
-std::vector<elfPlan::elfPlan> getElfPlans(const std::vector<std::string>& plans) {
-    std::vector<elfPlan::elfPlan> outputVector;
+elfPlan::elfPlanHandler getElfPlans(const std::vector<std::string>& plans) {
+    elfPlan::elfPlanHandler output;
     
     std::regex planReg ("#([0-9]+)\\s+@\\s+([0-9]+),([0-9]+)+:\\s+([0-9]+)x([0-9]+)");
     for( const auto& plan : plans ) {
         std::smatch myMatch;
         std::regex_search(plan,myMatch,planReg);
         int id = std::stoi(myMatch.str(1));
-        std::pair<int,int> startPoint = std::pair<int,int>(std::stoi(myMatch.str(2)),std::stoi(myMatch.str(3)));
+        elfPlan::Point startPoint = elfPlan::Point(std::stoi(myMatch.str(2)),std::stoi(myMatch.str(3)));
         int xDistance = std::stoi(myMatch.str(4));
         int yDistance = std::stoi(myMatch.str(5));
-        outputVector.push_back(elfPlan::elfPlan(elfPlan::planId(id), elfPlan::initPoint(startPoint), elfPlan::xDist(xDistance), elfPlan::yDist(yDistance)));
+        output.insert(elfPlan::elfPlan(elfPlan::planId(id), elfPlan::initPoint(startPoint), elfPlan::xDist(xDistance), elfPlan::yDist(yDistance)));
     }
 
-    return outputVector;
-}
-
-std::map<std::pair<int,int>, int> getClothUsage(std::vector<elfPlan::elfPlan> planVector) {
-    std::map<std::pair<int,int>, int> outputMap;
-
-    for( const auto& plan : planVector ) {
-        int startX = plan.getStartPoint().first;
-        int startY = plan.getStartPoint().second;
-        int distanceX = plan.getXDistance();
-        int distanceY = plan.getYDistance();;
-        for(int x = startX; x < (startX+distanceX); ++x) {
-            for(int y = startY; y < (startY+distanceY); ++y) {
-                outputMap[std::pair<int,int>(x,y)] += 1;
-            }
-        }
-    }
-    return outputMap;
-}
-
-bool isDuplicated(std::pair<std::pair<int,int>, int> inch) {
-    return (inch.second > 1);
-}
-
-int getUniquePlan(std::map<std::pair<int,int>, int> usageMap, std::vector<elfPlan::elfPlan> allElfPlans) {
-    for(const auto& plan : allElfPlans) {
-        bool unique = true;
-        int startX = plan.getStartPoint().first;
-        int startY = plan.getStartPoint().second;
-        int distanceX = plan.getXDistance();
-        int distanceY = plan.getYDistance();
-        for(int x = startX; x < (startX+distanceX); ++x) {
-            for(int y = startY; y < (startY+distanceY); ++y) {
-                if(usageMap[std::pair<int,int>(x,y)] > 1) {
-                    unique = false;
-                }
-            }
-        }
-        if(unique) {
-            return plan.getId();
-        }
-    }
-    return 0;
+    return output;
 }
 
 int main() {
     std::vector<std::string> allPlans = fileParse::storeEachLine("./challenges/challenge3/input.txt");
-    std::vector<elfPlan::elfPlan> planMap = getElfPlans(allPlans);
-    std::map<std::pair<int,int>, int> usage = getClothUsage(planMap);
-    int inchDups = std::count_if(usage.begin(),usage.end(),isDuplicated);
+    elfPlan::elfPlanHandler elfPlans = getElfPlans(allPlans);
+    int inchDups = elfPlans.getInchesDuplicated();
     std::cout << "Dup inches: " << inchDups << "\n";
-    int idOfUnique = getUniquePlan(usage, planMap);
+    int idOfUnique = elfPlans.getUniquePlan();
     std::cout << "unique id: " << idOfUnique << "\n";
     return 0;
 }
