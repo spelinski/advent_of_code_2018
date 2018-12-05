@@ -22,15 +22,6 @@ std::string removeAllPoli(std::string polymer){
     return polymer;
 }
 
-char getWorstUnit(std::string polymer){
-    std::map<char,int> letterUsage;
-    for(size_t i = 0; i  < polymer.size(); ++i){
-        letterUsage[tolower(polymer[i])] += 1;
-    }
-    auto pr = std::max_element(letterUsage.begin(), letterUsage.end(), [](const std::pair<char,int>& p1, const std::pair<char,int>& p2){return p1.second < p2.second;});
-    return pr->first;
-}
-
 std::string removeAllWorst(std::string polymer, char worst){
     polymer.erase(std::remove(polymer.begin(), polymer.end(), tolower(worst)), polymer.end());
     polymer.erase(std::remove(polymer.begin(), polymer.end(), toupper(worst)), polymer.end());
@@ -56,6 +47,6 @@ int main(){
     std::string polymer = polymerContainer.front();
     std::string newPolymer = removeAllPoli(polymer);
     std::cout << "new size: " << newPolymer.size() << "\n";;
-    std::cout << "most used: " << getLowestSize(polymer) << "\n";
+    std::cout << "lowest size: " << getLowestSize(polymer) << "\n";
     return 0;
 }
