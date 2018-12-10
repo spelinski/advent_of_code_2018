@@ -47,10 +47,12 @@ void calcUniqueNonInfinite(std::vector<destOption>& destOptions){
             if(outerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;};
             int myDist = abs(startX - x);
             std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,startY));
-            if(allDist.begin()->first != myDist || allDist.begin()->second > 1){break;};
+            if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
+                destOption.closetUniqueCount += 1;
+	    } else {break;}
 
             int innerLoopCount = 0;
-            for( int y = startY; y < (startY+500); ++y) {
+            for( int y = (startY+1); y < (startY+500); ++y) {
                 if(destOption.done){break;}
                 if(innerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
                 int myDist = abs(startX - x) + abs(startY - y);
@@ -137,9 +139,9 @@ int sumAllDist(const std::vector<destOption>& destOptions, Point currPoint){
 int main(){
     std::vector<std::string> destinations = fileParse::storeEachLine("./challenges/challenge6/input.txt");
     std::vector<destOption> allOptions = getAllDestOptions(destinations);
-//    calcUniqueNonInfinite(allOptions);
-//    std::cout << "nonInfinteCount: " << getHighest(allOptions) <<  "\n";
-    std::map<Point,int> region;
+    calcUniqueNonInfinite(allOptions);
+    std::cout << "nonInfinteCount: " << getHighest(allOptions) <<  "\n";
+/*    std::map<Point,int> region;
     for(auto& destOption : allOptions){
         auto [startX,startY] = destOption.destPoint;
         for( int x = startX; x < (startX+10000); ++x) {
@@ -187,7 +189,7 @@ int main(){
             ++regionSize;
         }
     }
-    std::cout << "RegionsSize: " << regionSize << "\n";
+    std::cout << "RegionsSize: " << regionSize << "\n";*/
 
     return 0;
 }
