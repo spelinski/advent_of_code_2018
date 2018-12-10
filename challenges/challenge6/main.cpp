@@ -139,22 +139,6 @@ int main(){
     std::vector<destOption> allOptions = getAllDestOptions(destinations);
 //    calcUniqueNonInfinite(allOptions);
 //    std::cout << "nonInfinteCount: " << getHighest(allOptions) <<  "\n";
-/*    int regionSize = 0;
-    int lastCheckOuter = -9700;
-    for(int x = -9700; x <=9958 ; ++x){
-        if(x > lastCheckOuter+100){
-            lastCheckOuter=x;
-            std::cout << "Outer Check at: " << lastCheckOuter << "\n";
-        }
-        for(int y = -9661; y <= 9953; ++y){
-            std::map<int,int> allDist = getDistanceToAllPoints(allOptions, Point(x,y));
-            int curDistance=0;
-            for(const auto& dist : allDist){
-                curDistance += dist.first;
-            }
-            if( curDistance<10000){regionSize+=1;}
-        }
-    }*/
     std::map<Point,int> region;
     for(auto& destOption : allOptions){
         auto [startX,startY] = destOption.destPoint;
