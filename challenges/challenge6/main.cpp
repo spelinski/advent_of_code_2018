@@ -13,30 +13,15 @@ struct destOption {
         bool operator <(const destOption& rhs){
             return closetUniqueCount < rhs.closetUniqueCount;
         }
+        int getDistance (Point otherPoint) const{
+            return abs(destPoint.first - otherPoint.first) + abs(destPoint.second - otherPoint.second);
+        }
+    public:
         Point destPoint;
         bool done;
         bool infinite;
         int closetUniqueCount;
 };
-
-std::map<int,int> getDistanceToAllPoints(const std::vector<destOption>& destOptions, Point currPoint){
-    std::map<int,int> output;
-    for(const auto& dest : destOptions){
-        auto [startX,startY] = dest.destPoint;
-        int dist = abs(startX - currPoint.first) + abs(startY - currPoint.second);
-        output[dist] += 1;
-    }
-    return output;
-}
-
-int sumAllDist(const std::vector<destOption>& destOptions, Point currPoint){
-    int distance = 0;
-    for(const auto& dest : destOptions){
-        auto [startX,startY] = dest.destPoint;
-        distance += abs(startX - currPoint.first) + abs(startY - currPoint.second);
-    }
-    return distance;
-}
 
 struct destinationOptions {
     public:
@@ -86,7 +71,7 @@ struct destinationOptions {
             performOperationOnAllPoints(maxDistance, [&](destOption& currOption, Point currPoint){
                     if(currOption.done){return false;}
                     int myDist = abs(currOption.destPoint.first - currPoint.first) + abs(currOption.destPoint.second - currPoint.second);
-                    std::map<int,int> allDist = getDistanceToAllPoints(allOptions, currPoint);
+                    std::map<int,int> allDist = getDistanceToAllPoints(currPoint);
                     if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
                         if(currPoint.first <= 0 || currPoint.second <= 0 || currPoint.first >= maxX || currPoint.second >= maxY) {
                             currOption.done=true;
@@ -110,7 +95,7 @@ struct destinationOptions {
             std::map<Point,int> region;
             performOperationOnAllPoints(maxRegionDistance, [&](destOption& destOption, Point currPoint){
                         (void)destOption;
-                        int myDist = sumAllDist(allOptions, currPoint);
+                        int myDist = sumAllDist(currPoint);
                         if(myDist < maxRegionDistance){
                             region[currPoint] = 1;
                             return true;
@@ -129,6 +114,20 @@ struct destinationOptions {
                 if(dest.destPoint.first > maxX){maxX = dest.destPoint.first;}
                 if(dest.destPoint.second > maxY){maxY = dest.destPoint.second;}
             }
+        }
+        std::map<int,int> getDistanceToAllPoints(Point currPoint){
+            std::map<int,int> output;
+            for(const auto& dest : allOptions){
+                output[dest.getDistance(currPoint)] += 1;
+            }
+            return output;
+        }
+        int sumAllDist(Point currPoint){
+            int distance = 0;
+            for(const auto& dest : allOptions){
+                distance += dest.getDistance(currPoint);
+            }
+            return distance;
         }
 };
 
