@@ -10,6 +10,9 @@ typedef std::pair<int,int> Point;
 struct destOption {
     public:
         explicit destOption(Point destination):destPoint(destination),done(false),closetUniqueCount(0){}
+        bool operator <(const destOption& rhs){
+            return closetUniqueCount < rhs.closetUniqueCount;
+        }
         Point destPoint;
         bool done;
         bool infinite;
@@ -26,88 +29,106 @@ std::map<int,int> getDistanceToAllPoints(const std::vector<destOption>& destOpti
     return output;
 }
 
+int sumAllDist(const std::vector<destOption>& destOptions, Point currPoint){
+    int distance = 0;
+    for(const auto& dest : destOptions){
+        auto [startX,startY] = dest.destPoint;
+        distance += abs(startX - currPoint.first) + abs(startY - currPoint.second);
+    }
+    return distance;
+}
 
 struct destinationOptions {
     public:
-        explicit destinationOptions(std::vector<destOption> inOptions):allOptions(inOptions){}
-        void calcUniqueNonInfinite(){
+        explicit destinationOptions(std::vector<destOption> inOptions):allOptions(inOptions),maxX(0),maxY(0){}
+
+        template<typename T>
+        void performOperationOnAllPoints(int maxDistance, T action){
             for(auto& destOption : allOptions){
                 auto [startX,startY] = destOption.destPoint;
-                int outerLoopCount = 0;
-                for( int x = startX; x < (startX+500); ++x) {
-                    if(isUnique(destOption, outerLoopCount, Point(x,startY))){
-                        destOption.closetUniqueCount += 1;
-                    } else {
+                for( int x = startX; x < (startX+maxDistance); ++x) {
+                    if(!action(destOption, Point(x,startY))){
                         break;
                     }
-
-                    int innerLoopCount = 0;
-                    for( int y = (startY+1); y < (startY+500); ++y) {
-                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
-                            destOption.closetUniqueCount += 1;
-                        } else {
+                    for( int y = (startY+1); y < (startY+maxDistance); ++y) {
+                        if(!action(destOption, Point(x,y))){
                             break;
                         }
-
-                        ++innerLoopCount;
                     }
-                    innerLoopCount = 0;
-                    for( int y = (startY-1); y > (startY-500); --y) {
-                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
-                            destOption.closetUniqueCount += 1;
-                        } else {
+                    for( int y = (startY-1); y > (startY-maxDistance); --y) {
+                        if(!action(destOption, Point(x,y))){
                             break;
                         }
-                        ++innerLoopCount;
                     }
-                    ++outerLoopCount;
                 }
-                outerLoopCount = 0;
-                for( int x = (startX-1); x > (startX-500); --x) {
-                    if(isUnique(destOption, outerLoopCount, Point(x,startY))){
-                        destOption.closetUniqueCount += 1;
-                    } else {
+                for( int x = (startX-1); x > (startX-maxDistance); --x) {
+                    if(!action(destOption, Point(x,startY))){
                         break;
                     }
 
-                    int innerLoopCount = 0;
-                    for( int y = (startY+1); y < (startY+500); ++y) {
-                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
-                            destOption.closetUniqueCount += 1;
-                        } else {
+                    for( int y = (startY+1); y < (startY+maxDistance); ++y) {
+                        if(!action(destOption, Point(x,y))){
                             break;
                         }
-                        ++innerLoopCount;
                     }
-                    innerLoopCount = 0;
-                    for( int y = (startY-1); y > (startY-500); --y) {
-                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
-                            destOption.closetUniqueCount += 1;
-                        } else {
+                    for( int y = (startY-1); y > (startY-maxDistance); --y) {
+                        if(!action(destOption, Point(x,y))){
                             break;
                         }
-                        ++innerLoopCount;
                     }
-                    ++outerLoopCount;
                 }
                 destOption.done = true;
             }
         }
-        std::vector<destOption> allOptions;
+        void calcUniqueNonInfinite(){
+            int maxDistance = 500;
+            calcMaxXAndY();
+            performOperationOnAllPoints(maxDistance, [&](destOption& currOption, Point currPoint){
+                    if(currOption.done){return false;}
+                    int myDist = abs(currOption.destPoint.first - currPoint.first) + abs(currOption.destPoint.second - currPoint.second);
+                    std::map<int,int> allDist = getDistanceToAllPoints(allOptions, currPoint);
+                    if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
+                        if(currPoint.first <= 0 || currPoint.second <= 0 || currPoint.first >= maxX || currPoint.second >= maxY) {
+                            currOption.done=true;
+                            currOption.closetUniqueCount = 0;
+                            return false;
+                        }
+                        currOption.closetUniqueCount += 1;
+                        return true;
+                    }
+                    return false;
+                });
+        }
+
+        int getHighest(){
+            auto pr = std::max_element(allOptions.begin(), allOptions.end());
+            return pr->closetUniqueCount;
+        }
+
+        int getRegionSizeAroundAllPoints(){
+            int maxRegionDistance = 10000;
+            std::map<Point,int> region;
+            performOperationOnAllPoints(maxRegionDistance, [&](destOption& destOption, Point currPoint){
+                        (void)destOption;
+                        int myDist = sumAllDist(allOptions, currPoint);
+                        if(myDist < maxRegionDistance){
+                            region[currPoint] = 1;
+                            return true;
+                        } else {
+                            return false;
+                        };
+                    });
+            return region.size();
+        }
     private:
-        bool isUnique(destOption& currOption, int loopCount, const Point& currPoint){
-            if(currOption.done){return false;}
-            if(loopCount > 400){
-                currOption.done=true;
-                currOption.closetUniqueCount=0; 
-                return false;
+        std::vector<destOption> allOptions;
+        int maxX;
+        int maxY;
+        void calcMaxXAndY(){
+            for(const auto& dest : allOptions){
+                if(dest.destPoint.first > maxX){maxX = dest.destPoint.first;}
+                if(dest.destPoint.second > maxY){maxY = dest.destPoint.second;}
             }
-            int myDist = abs(currOption.destPoint.first - currPoint.first) + abs(currOption.destPoint.second - currPoint.second);
-            std::map<int,int> allDist = getDistanceToAllPoints(allOptions, currPoint);
-            if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
-                return true;
-            }
-            return false;
         }
 };
 
@@ -123,77 +144,12 @@ std::vector<destOption> getAllDestOptions(const std::vector<std::string>& destin
     return output;
 }
 
-int getHighest(std::vector<destOption> allOptions){
-    int curMax = 0;
-    for(const auto& dest : allOptions){
-        if(dest.closetUniqueCount > curMax){curMax = dest.closetUniqueCount;}
-    }
-    return curMax;
-}
-
-int sumAllDist(const std::vector<destOption>& destOptions, Point currPoint){
-    int distance = 0;
-    for(const auto& dest : destOptions){
-        auto [startX,startY] = dest.destPoint;
-        distance += abs(startX - currPoint.first) + abs(startY - currPoint.second);
-    }
-    return distance;
-}
-
 int main(){
     std::vector<std::string> destinations = fileParse::storeEachLine("./challenges/challenge6/input.txt");
     destinationOptions optionContainer(getAllDestOptions(destinations));
     optionContainer.calcUniqueNonInfinite();
-    std::cout << "nonInfinteCount: " << getHighest(optionContainer.allOptions) <<  "\n";
-/*    std::map<Point,int> region;
-    for(auto& destOption : allOptions){
-        auto [startX,startY] = destOption.destPoint;
-        for( int x = startX; x < (startX+10000); ++x) {
-            int myDist = sumAllDist(allOptions, Point(x,startY));
-            if(myDist >= 10000){break;};
-
-            for( int y = startY; y < (startY+10000); ++y) {
-                int myDistance = sumAllDist(allOptions, Point(x,y));
-                if(myDistance < 10000){
-                    region[Point(x,y)] = 1;
-                }
-                else{break;}
-            }
-            for( int y = (startY-1); y > (startY-10000); --y) {
-                int myDistance = sumAllDist(allOptions, Point(x,y));
-                if(myDistance < 10000){
-                    region[Point(x,y)] = 1;
-                }
-                else{break;}
-            }
-        }
-        for( int x = (startX-1); x > (startX-10000); --x) {
-            int myDist = sumAllDist(allOptions, Point(x,startY));
-            if(myDist >= 10000){break;};
-
-            for( int y = startY; y < (startY+10000); ++y) {
-                int myDistance = sumAllDist(allOptions, Point(x,y));
-                if(myDistance < 10000){
-                    region[Point(x,y)] = 1;
-                }
-                else{break;}
-            }
-            for( int y = (startY-1); y > (startY-10000); --y) {
-                int myDistance = sumAllDist(allOptions, Point(x,y));
-                if(myDistance < 10000){
-                    region[Point(x,y)] = 1;
-                }
-                else{break;}
-            }
-        }
-    }
-    int regionSize = 0;
-    for(const auto& here : region){
-        if(here.second == 1){
-            ++regionSize;
-        }
-    }
-    std::cout << "RegionsSize: " << regionSize << "\n";*/
+    std::cout << "nonInfinteCount: " << optionContainer.getHighest() <<  "\n";
+    std::cout << "Testing: " << optionContainer.getRegionSizeAroundAllPoints() << "\n";
 
     return 0;
 }
