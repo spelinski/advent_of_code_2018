@@ -7,7 +7,6 @@
 
 typedef std::pair<int,int> Point;
 
-
 struct destOption {
     public:
         explicit destOption(Point destination):destPoint(destination),done(false),closetUniqueCount(0){}
@@ -16,17 +15,6 @@ struct destOption {
         bool infinite;
         int closetUniqueCount;
 };
-
-std::vector<destOption> getAllDestOptions(const std::vector<std::string>& destinations){
-    std::vector<destOption> output;
-    std::regex destReg ("([0-9]+),\\s+([0-9]+)");
-    for(const auto& dest : destinations){
-        std::smatch myMatch;
-        std::regex_search(dest,myMatch,destReg);
-        output.push_back(destOption(std::pair<int,int>(std::stoi(myMatch[1]),std::stoi(myMatch[2]))));
-    }
-    return output;
-}
 
 std::map<int,int> getDistanceToAllPoints(const std::vector<destOption>& destOptions, Point currPoint){
     std::map<int,int> output;
@@ -38,84 +26,101 @@ std::map<int,int> getDistanceToAllPoints(const std::vector<destOption>& destOpti
     return output;
 }
 
-void calcUniqueNonInfinite(std::vector<destOption>& destOptions){
-    for(auto& destOption : destOptions){
-        auto [startX,startY] = destOption.destPoint;
-        int outerLoopCount = 0;
-        for( int x = startX; x < (startX+500); ++x) {
-            if(destOption.done){break;}
-            if(outerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;};
-            int myDist = abs(startX - x);
-            std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,startY));
-            if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
-                destOption.closetUniqueCount += 1;
-	    } else {break;}
 
-            int innerLoopCount = 0;
-            for( int y = (startY+1); y < (startY+500); ++y) {
-                if(destOption.done){break;}
-                if(innerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
-                int myDist = abs(startX - x) + abs(startY - y);
-                std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,y));
-                if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
-                    destOption.closetUniqueCount += 1;
+struct destinationOptions {
+    public:
+        explicit destinationOptions(std::vector<destOption> inOptions):allOptions(inOptions){}
+        void calcUniqueNonInfinite(){
+            for(auto& destOption : allOptions){
+                auto [startX,startY] = destOption.destPoint;
+                int outerLoopCount = 0;
+                for( int x = startX; x < (startX+500); ++x) {
+                    if(isUnique(destOption, outerLoopCount, Point(x,startY))){
+                        destOption.closetUniqueCount += 1;
+                    } else {
+                        break;
+                    }
+
+                    int innerLoopCount = 0;
+                    for( int y = (startY+1); y < (startY+500); ++y) {
+                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
+                            destOption.closetUniqueCount += 1;
+                        } else {
+                            break;
+                        }
+
+                        ++innerLoopCount;
+                    }
+                    innerLoopCount = 0;
+                    for( int y = (startY-1); y > (startY-500); --y) {
+                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
+                            destOption.closetUniqueCount += 1;
+                        } else {
+                            break;
+                        }
+                        ++innerLoopCount;
+                    }
+                    ++outerLoopCount;
                 }
-                else{break;}
+                outerLoopCount = 0;
+                for( int x = (startX-1); x > (startX-500); --x) {
+                    if(isUnique(destOption, outerLoopCount, Point(x,startY))){
+                        destOption.closetUniqueCount += 1;
+                    } else {
+                        break;
+                    }
 
-                ++innerLoopCount;
+                    int innerLoopCount = 0;
+                    for( int y = (startY+1); y < (startY+500); ++y) {
+                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
+                            destOption.closetUniqueCount += 1;
+                        } else {
+                            break;
+                        }
+                        ++innerLoopCount;
+                    }
+                    innerLoopCount = 0;
+                    for( int y = (startY-1); y > (startY-500); --y) {
+                        if(isUnique(destOption, innerLoopCount, Point(x,y))){
+                            destOption.closetUniqueCount += 1;
+                        } else {
+                            break;
+                        }
+                        ++innerLoopCount;
+                    }
+                    ++outerLoopCount;
+                }
+                destOption.done = true;
             }
-            innerLoopCount = 0;
-            for( int y = (startY-1); y > (startY-500); --y) {
-                if(destOption.done){break;}
-                if(innerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
-                int myDist = abs(startX - x) + abs(startY - y);
-                std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,y));
-                if(allDist.begin()->first == myDist && allDist.begin()->second == 1){destOption.closetUniqueCount += 1;}
-                else{break;}
-
-                ++innerLoopCount;
-            }
-
-            ++outerLoopCount;
         }
-
-        outerLoopCount = 0;
-        for( int x = (startX-1); x > (startX-500); --x) {
-            if(destOption.done){break;}
-            if(outerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
-            int myDist = abs(startX - x);
-            std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,startY));
-            if(allDist.begin()->first != myDist || allDist.begin()->second > 1){break;};
-
-
-            int innerLoopCount = 0;
-            for( int y = startY; y < (startY+500); ++y) {
-                if(destOption.done){break;}
-                if(innerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
-                int myDist = abs(startX - x) + abs(startY - y);
-                std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,y));
-                if(allDist.begin()->first == myDist && allDist.begin()->second == 1){destOption.closetUniqueCount += 1;}
-                else{break;}
-
-                ++innerLoopCount;
+        std::vector<destOption> allOptions;
+    private:
+        bool isUnique(destOption& currOption, int loopCount, const Point& currPoint){
+            if(currOption.done){return false;}
+            if(loopCount > 400){
+                currOption.done=true;
+                currOption.closetUniqueCount=0; 
+                return false;
             }
-            innerLoopCount = 0;
-            for( int y = (startY-1); y > (startY-500); --y) {
-                if(destOption.done){break;}
-                if(innerLoopCount > 400){destOption.done=true; destOption.closetUniqueCount=0; break;}
-                int myDist = abs(startX - x) + abs(startY - y);
-                std::map<int,int> allDist = getDistanceToAllPoints(destOptions, Point(x,y));
-                if(allDist.begin()->first == myDist && allDist.begin()->second == 1){destOption.closetUniqueCount += 1;}
-                else{break;}
-
-                ++innerLoopCount;
+            int myDist = abs(currOption.destPoint.first - currPoint.first) + abs(currOption.destPoint.second - currPoint.second);
+            std::map<int,int> allDist = getDistanceToAllPoints(allOptions, currPoint);
+            if(allDist.begin()->first == myDist && allDist.begin()->second == 1){
+                return true;
             }
-
-            ++outerLoopCount;
+            return false;
         }
+};
 
-        destOption.done = true;
+
+std::vector<destOption> getAllDestOptions(const std::vector<std::string>& destinations){
+    std::vector<destOption> output;
+    std::regex destReg ("([0-9]+),\\s+([0-9]+)");
+    for(const auto& dest : destinations){
+        std::smatch myMatch;
+        std::regex_search(dest,myMatch,destReg);
+        output.push_back(destOption(std::pair<int,int>(std::stoi(myMatch[1]),std::stoi(myMatch[2]))));
     }
+    return output;
 }
 
 int getHighest(std::vector<destOption> allOptions){
@@ -135,12 +140,11 @@ int sumAllDist(const std::vector<destOption>& destOptions, Point currPoint){
     return distance;
 }
 
-
 int main(){
     std::vector<std::string> destinations = fileParse::storeEachLine("./challenges/challenge6/input.txt");
-    std::vector<destOption> allOptions = getAllDestOptions(destinations);
-    calcUniqueNonInfinite(allOptions);
-    std::cout << "nonInfinteCount: " << getHighest(allOptions) <<  "\n";
+    destinationOptions optionContainer(getAllDestOptions(destinations));
+    optionContainer.calcUniqueNonInfinite();
+    std::cout << "nonInfinteCount: " << getHighest(optionContainer.allOptions) <<  "\n";
 /*    std::map<Point,int> region;
     for(auto& destOption : allOptions){
         auto [startX,startY] = destOption.destPoint;
