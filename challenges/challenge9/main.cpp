@@ -1,6 +1,5 @@
 #include "fileParser.h"
 #include <iostream>
-#include <list>
 #include <regex>
 
 std::pair<int,int> getPlayersAndEndValue(std::string singleGame){
@@ -51,7 +50,7 @@ class game{
         }
         bool finished;
     private:
-        std::list<int> board;
+        std::vector<int> board;
         int currentMarbleIndex;
         int nextMarbleValue;
         int endValue;
