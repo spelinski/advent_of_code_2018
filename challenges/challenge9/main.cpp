@@ -11,7 +11,7 @@ std::pair<int,int> getPlayersAndEndValue(std::string singleGame){
 
 struct player{
     explicit player():score(0){}
-    int score;
+    long score;
 };
 
 class game{
