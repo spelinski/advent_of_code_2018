@@ -1,3 +1,4 @@
+//TODO: use something like a double linked list, shifting a giant vector in part 2 is unsustainable
 #include "fileParser.h"
 #include <iostream>
 #include <regex>
