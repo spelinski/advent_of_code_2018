@@ -9,32 +9,61 @@ struct pot {
     bool hasPlant;
 };
 
+bool operator ==(const pot& lhs, const pot& rhs){
+    return (lhs.hasPlant == rhs.hasPlant);
+}
+
 struct potState{
     potState(){}
+    bool operator ==(const potState& rhs){
+        return allPots == rhs.allPots;
+    }
     std::map<int,pot> allPots;
 };
 
 struct plantNote{
     plantNote(){}
     bool resultsInPlant;
-    std::map<int, bool> genInput;
 };
+
+struct generationKey{
+    generationKey(){
+        generation[0] = false;
+        generation[1] = false;
+        generation[2] = false;
+        generation[3] = false;
+        generation[4] = false;
+    }
+    bool generation[5];
+};
+
+bool operator<(const generationKey& lhs, const generationKey& rhs){
+    for(int i = 0; i < 5; ++i){
+        if(lhs.generation[i] != rhs.generation[i]) {
+            if(lhs.generation[i]){
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 struct plantNotes{
     plantNotes(){}
     bool getsPlant(potState currentState, int firstIndex, int secondIndex, int thirdIndex, int fourthIndex, int fifthIndex){
-        for(auto& note : allNotes){
-            if(currentState.allPots[firstIndex].hasPlant != note.genInput[-2]){continue;}
-            if(currentState.allPots[secondIndex].hasPlant != note.genInput[-1]){continue;}
-            if(currentState.allPots[thirdIndex].hasPlant != note.genInput[0]){continue;}
-            if(currentState.allPots[fourthIndex].hasPlant != note.genInput[1]){continue;}
-            if(currentState.allPots[fifthIndex].hasPlant != note.genInput[2]){continue;}
-            return note.resultsInPlant;
-        }
-        return false;
+        generationKey input;
+        input.generation[0] = currentState.allPots[firstIndex].hasPlant;
+        input.generation[1] = currentState.allPots[secondIndex].hasPlant;
+        input.generation[2] = currentState.allPots[thirdIndex].hasPlant;
+        input.generation[3] = currentState.allPots[fourthIndex].hasPlant;
+        input.generation[4] = currentState.allPots[fifthIndex].hasPlant;
+        return allNotes[input].resultsInPlant;
     }
-    std::vector<plantNote> allNotes;
+    std::map<generationKey,plantNote> allNotes;
 };
+
 
 potState parseInitialState(std::string initialStateLine){
     potState output;
@@ -54,18 +83,19 @@ potState parseInitialState(std::string initialStateLine){
 
 plantNotes parsePlantNotes(const std::vector<std::string>& plantNotesString){
     plantNotes output;
+    generationKey genKey;
     std::regex noteReg ("(.*)\\s+=>\\s+([.|#])");
     for(const auto& note : plantNotesString){
         plantNote currentNote;
         std::smatch myMatch;
         std::regex_search(note, myMatch, noteReg);
         std::string input = myMatch[1];
-        for(size_t i=0; i < input.size(); ++i){
-            currentNote.genInput[i-2] = (input[i] == '#');
+        for(size_t i=0; i < 5; ++i){
+            genKey.generation[i] = (input[i] == '#');
         }
         std::string result = myMatch[2];
         currentNote.resultsInPlant = (result[0] == '#');
-        output.allNotes.push_back(currentNote);
+        output.allNotes[genKey] = currentNote;
     }
 
     return output;
@@ -119,6 +149,7 @@ int sumAllPlants(const potState& currentState){
 }
 
 int main(){
+    long numberOfGenerations=200;
 
     std::vector<std::string> initialStateAndNotes = fileParse::storeEachLine("./challenges/challenge12/input.txt");
 
@@ -126,13 +157,14 @@ int main(){
     initialStateAndNotes.erase(initialStateAndNotes.begin());
     initialStateAndNotes.erase(initialStateAndNotes.begin());
     plantNotes allMyNotes = parsePlantNotes(initialStateAndNotes);
-    for(int i=0; i<20; ++i){
-        printGeneration(currentState, i);
+    for(int i=0; i<numberOfGenerations; ++i){
+        //printGeneration(currentState, i);
+        std::cout << "generation: " << i << ",  innerSum: " << sumAllPlants(currentState) << "\n";
         currentState = nextGeneration(currentState,allMyNotes);
     }
-    printGeneration(currentState, 20);
+//    printGeneration(currentState, numberOfGenerations);
     int sum = sumAllPlants(currentState);
-    std::cout << "sum after 20: " << sum << "\n";
+    std::cout << "sum: " << sum << "\n";
     
 
     return 0;
