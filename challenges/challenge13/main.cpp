@@ -244,6 +244,7 @@ int checkCartsLeft(const std::map<Point,cart,checkPointOrdering>& currentCarts){
 int main(){
     std::vector<std::string> allTrackLines = fileParse::storeEachLine("./challenges/challenge13/input.txt");
     trackSystem mySystem = parseSystem(allTrackLines);
+    printTracks(mySystem);
     int aborting = 0;
     while(!mySystem.collision){
         if(aborting > 1000){
@@ -254,14 +255,8 @@ int main(){
         ++aborting;
     }
     std::cout << "collisionPoint: " << mySystem.collisionPoint.first << "," << mySystem.collisionPoint.second << "\n";
-    int checkingIn = 0;
     while(checkCartsLeft(mySystem.cartMap) > 1){
-        if(checkingIn > 500){
-            std::cout << "cartsLeft: " << checkCartsLeft(mySystem.cartMap) << "\n";
-            checkingIn = 0;
-        }
         mySystem.performTick();
-        ++checkingIn;
     }
     for(const auto& cart : mySystem.cartMap){
         if(cart.second.isReal()){
