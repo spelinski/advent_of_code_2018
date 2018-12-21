@@ -244,7 +244,6 @@ int checkCartsLeft(const std::map<Point,cart,checkPointOrdering>& currentCarts){
 int main(){
     std::vector<std::string> allTrackLines = fileParse::storeEachLine("./challenges/challenge13/input.txt");
     trackSystem mySystem = parseSystem(allTrackLines);
-    printTracks(mySystem);
     int aborting = 0;
     while(!mySystem.collision){
         if(aborting > 1000){
