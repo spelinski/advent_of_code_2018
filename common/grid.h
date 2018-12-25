@@ -16,6 +16,9 @@ namespace grid{
             int performCountWithConditional(FT conditional){
                 return std::count_if(gridMap.begin(), gridMap.end(), conditional);
             }
+            int getSize(){
+                return gridMap.size();
+            }
         private:
             std::map<Point, T> gridMap;
     };

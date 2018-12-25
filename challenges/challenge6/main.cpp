@@ -1,4 +1,5 @@
 #include "fileParser.h"
+#include "grid.h"
 #include <cmath>
 #include <iostream>
 #include <regex>
@@ -92,18 +93,18 @@ struct destinationOptions {
 
         int getRegionSizeAroundAllPoints(){
             int maxRegionDistance = 10000;
-            std::map<Point,int> region;
+            grid::grid<int> region;
             performOperationOnAllPoints(maxRegionDistance, [&](destOption& destOption, Point currPoint){
                         (void)destOption;
                         int myDist = sumAllDist(currPoint);
                         if(myDist < maxRegionDistance){
-                            region[currPoint] = 1;
+                            region.setItem(currPoint,1);
                             return true;
                         } else {
                             return false;
                         };
                     });
-            return region.size();
+            return region.getSize();
         }
     private:
         std::vector<destOption> allOptions;
