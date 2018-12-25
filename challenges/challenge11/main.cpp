@@ -1,3 +1,4 @@
+#include "grid.h"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -6,7 +7,9 @@
 typedef std::pair<int,int> Point;
 
 int SerialNumber = 3628;
-std::map<Point, int> PowerLevelMap;
+grid::grid<int> PowerLevelGrid;
+
+//These two are used for memoization
 std::map<Point, std::map<int,int> > PowerLevelSizeMap;
 std::map<Point, std::map<int,bool> > PowerLevelSizeCheck;
 
@@ -26,7 +29,7 @@ void seedMap(){
                 localPowerLevel = 0;
             }
             localPowerLevel -= 5;
-            PowerLevelMap[Point(x,y)] = localPowerLevel;
+            PowerLevelGrid.setItem(Point(x,y), localPowerLevel);
         }
     }
 }
@@ -36,15 +39,15 @@ int getPowerLevel(Point upperLeft, int size=3){
     if(PowerLevelSizeCheck[upperLeft][size-1]){
         powerLevel = PowerLevelSizeMap[upperLeft][size-1];
         for(int x = upperLeft.first; x < (upperLeft.first+size); ++x){
-            powerLevel += PowerLevelMap[Point(x,(upperLeft.second+(size-1)))];
+            powerLevel += PowerLevelGrid.getItem(Point(x,(upperLeft.second+(size-1))));
         }
         for(int y = upperLeft.second; y < (upperLeft.second+size-1); ++y){
-            powerLevel += PowerLevelMap[Point((upperLeft.first+(size-1)),y)];
+            powerLevel += PowerLevelGrid.getItem(Point((upperLeft.first+(size-1)),y));
         }
     } else {
         for(int y = upperLeft.second; y < (upperLeft.second+size); ++y){
             for(int x = upperLeft.first; x < (upperLeft.first+size); ++x){
-                powerLevel += PowerLevelMap[Point(x,y)];
+                powerLevel += PowerLevelGrid.getItem(Point(x,y));
             }
         }
     }
