@@ -1,3 +1,4 @@
+#include "grid.h"
 #include <algorithm>
 #include <map>
 #include <utility>
@@ -51,7 +52,7 @@ namespace elfPlan {
         public:
             elfPlanHandler(){}
             void insert(elfPlan newPlan){
-                auto incrementUsages = [&](Point curPoint){usageMap[curPoint] += 1;};
+                auto incrementUsages = [&](Point curPoint){usageGrid.setItem(curPoint, (usageGrid.getItem(curPoint)+1));};
                 newPlan.performOperationWithEachPoint(incrementUsages);
                 allPlans.push_back(newPlan);
             }
@@ -59,7 +60,7 @@ namespace elfPlan {
             int getUniquePlan() {
                 for(auto& plan : allPlans) {
                     bool unique = true;
-                    auto checkUnique = [&](Point curPoint){if(usageMap[curPoint] > 1) {unique = false;}};
+                    auto checkUnique = [&](Point curPoint){if(usageGrid.getItem(curPoint) > 1) {unique = false;}};
                     plan.performOperationWithEachPoint(checkUnique);
                     if(unique) {
                         return plan.getId();
@@ -69,12 +70,12 @@ namespace elfPlan {
             }
 
             int getInchesDuplicated(){
-                return std::count_if(usageMap.begin(),usageMap.end(),[](auto inch){return (inch.second > 1);});
+                return usageGrid.performCountWithConditional([](auto inch){return (inch.second > 1);});
             }
 
         private:
             std::vector<elfPlan> allPlans;
-            std::map<Point, int> usageMap;
+            grid::grid<int> usageGrid;
     };
 
 }
