@@ -43,7 +43,6 @@ int getMaxY(const std::vector<star>& sky){
 }
 
 void printCurrentSky(std::vector<star>& sky){
-    std::map<Point, char> printableSky;
     int minX = getMinX(sky);
     int minY = getMinY(sky);
     int maxX = getMaxX(sky);
