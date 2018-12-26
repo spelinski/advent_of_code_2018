@@ -1,8 +1,7 @@
 #include "fileParser.h"
+#include "grid.h"
 #include <iostream>
 #include <map>
-
-typedef std::pair<int,int> Point;
 
 enum direction{
     up, down, left, right
@@ -23,21 +22,6 @@ struct track{
     bool lower_right;
     bool vertical;
     bool horizontal;
-};
-
-struct checkPointOrdering {
-    bool operator()(const Point& p1, const Point& p2){
-        if(p1.second < p2.second){
-            return true;
-        }
-        if(p2.second < p1.second){
-            return false;
-        }
-        if(p1.first < p2.first){
-            return true;
-        }
-        return false;
-    }
 };
 
 class cart{
@@ -87,40 +71,40 @@ class trackSystem{
     public:
         trackSystem():collision(false){}
         void performTick(){
-            std::map<Point, cart, checkPointOrdering> newCartMap = cartMap;
+            grid::grid<cart> newCartMap = cartMap;
             for(const auto& currCart : cartMap){
                 cart newCart = currCart.second;
                 if(newCart.isReal()){
-                    Point newLocation;
+                    grid::Point newLocation;
                     track newLocTrack;
                     direction curDir = newCart.getCurrentDirection();
                     if(curDir == up){
-                        newLocation = Point(currCart.first.first,currCart.first.second-1);
-                        newLocTrack = trackMap[newLocation];
+                        newLocation = grid::Point(currCart.first.first,currCart.first.second-1);
+                        newLocTrack = trackMap.getItem(newLocation);
                         if(newLocTrack.upper_right){
                             newCart.changeDirection(left);
                         } else if(newLocTrack.upper_left){
                             newCart.changeDirection(right);
                         }
                     } else if(curDir == left){
-                        newLocation = Point(currCart.first.first-1,currCart.first.second);
-                        newLocTrack = trackMap[newLocation];
+                        newLocation = grid::Point(currCart.first.first-1,currCart.first.second);
+                        newLocTrack = trackMap.getItem(newLocation);
                         if(newLocTrack.upper_left){
                             newCart.changeDirection(down);
                         } else if(newLocTrack.lower_left){
                             newCart.changeDirection(up);
                         }
                     } else if(curDir == right){
-                        newLocation = Point(currCart.first.first+1,currCart.first.second);
-                        newLocTrack = trackMap[newLocation];
+                        newLocation = grid::Point(currCart.first.first+1,currCart.first.second);
+                        newLocTrack = trackMap.getItem(newLocation);
                         if(newLocTrack.upper_right){
                             newCart.changeDirection(down);
                         } else if(newLocTrack.lower_right){
                             newCart.changeDirection(up);
                         }
                     } else if(curDir == down){
-                        newLocation = Point(currCart.first.first,currCart.first.second+1);
-                        newLocTrack = trackMap[newLocation];
+                        newLocation = grid::Point(currCart.first.first,currCart.first.second+1);
+                        newLocTrack = trackMap.getItem(newLocation);
                         if(newLocTrack.lower_left){
                             newCart.changeDirection(right);
                         } else if(newLocTrack.lower_right){
@@ -130,23 +114,23 @@ class trackSystem{
                     if(newLocTrack.intersection){
                         newCart.hitIntersection();
                     }
-                    if(newCartMap[newLocation].isReal()){
+                    if(newCartMap.getItem(newLocation).isReal()){
                         collision = true;
                         collisionPoint = newLocation;
-                        newCartMap[currCart.first] = cart();
-                        newCartMap[newLocation] = cart();
-                    } else if(newCartMap[currCart.first].isReal()){
-                        newCartMap[currCart.first] = cart();
-                        newCartMap[newLocation] = newCart;
+                        newCartMap.setItem(currCart.first, cart());
+                        newCartMap.setItem(newLocation, cart());
+                    } else if(newCartMap.getItem(currCart.first).isReal()){
+                        newCartMap.setItem(currCart.first, cart());
+                        newCartMap.setItem(newLocation, newCart);
                     }
                 }
             }
             cartMap = newCartMap;
         }
-        std::map<Point, track, checkPointOrdering> trackMap;
-        std::map<Point, cart, checkPointOrdering> cartMap;
+        grid::grid<track> trackMap;
+        grid::grid<cart> cartMap;
         bool collision;
-        Point collisionPoint;
+        grid::Point collisionPoint;
 };
 
 trackSystem parseSystem(std::vector<std::string> allTracks){
@@ -174,21 +158,21 @@ trackSystem parseSystem(std::vector<std::string> allTracks){
             } else if((piece == '-') || (piece == '>') || (piece == '<')){
                 currentTrack.horizontal = true;
                 if(piece == '>'){
-                    output.cartMap[Point(x,y)] = cart(right);
+                    output.cartMap.setItem(grid::Point(x,y), cart(right));
                 } else if(piece == '<') {
-                    output.cartMap[Point(x,y)] = cart(left);
+                    output.cartMap.setItem(grid::Point(x,y), cart(left));
                 }
             } else if((piece == '|') || (piece == '^') || (piece == 'v')){
                 currentTrack.vertical = true;
                 if(piece == '^'){
-                    output.cartMap[Point(x,y)] = cart(up);
+                    output.cartMap.setItem(grid::Point(x,y), cart(up));
                 } else if (piece == 'v'){
-                    output.cartMap[Point(x,y)] = cart(down);
+                    output.cartMap.setItem(grid::Point(x,y), cart(down));
                 }
             } else {
                 currentTrack.exist = false;
             }
-            output.trackMap[Point(x,y)] = currentTrack;
+            output.trackMap.setItem(grid::Point(x,y), currentTrack);
             ++x;
         }
         ++y;
@@ -203,8 +187,8 @@ void printTracks(trackSystem& printingTrack){
             std::cout << "\n";
             lastY = trackPiece.first.second;
         }
-        if(printingTrack.cartMap[trackPiece.first].isReal()){
-            direction curDir = printingTrack.cartMap[trackPiece.first].getCurrentDirection();
+        if(printingTrack.cartMap.getItem(trackPiece.first).isReal()){
+            direction curDir = printingTrack.cartMap.getItem(trackPiece.first).getCurrentDirection();
             if(curDir == up){
                 std::cout << "^";
             } else if(curDir == down){
@@ -231,7 +215,7 @@ void printTracks(trackSystem& printingTrack){
     std::cout << "\n";
 }
 
-int checkCartsLeft(const std::map<Point,cart,checkPointOrdering>& currentCarts){
+int checkCartsLeft(const grid::grid<cart>& currentCarts){
     int count = 0;
     for(const auto& cart : currentCarts){
         if(cart.second.isReal()){
