@@ -1,58 +1,41 @@
 #include "grid.h"
 #include "fileParser.h"
 #include <iostream>
+#include <variant>
 
-class goblinFighter{
-    public:
-        goblinFighter():real(false){}
-        goblinFighter(bool real):real(real){}
-        bool isReal(){return real;}
-    private:
-        bool real;
-};
+class goblinFighter{};
 
-class elfFighter{
-    public:
-        elfFighter():real(false){}
-        elfFighter(bool real):real(real){}
-        bool isReal(){return real;}
-    private:
-        bool real;
-};
+class elfFighter{};
 
-struct caveFeature{
-    caveFeature():isWall(false){}
-    caveFeature(bool isWall):isWall(isWall){}
-    bool isWall;
-};
+struct wall{};
+
+struct empty{};
+
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+using caveSpot = std::variant<goblinFighter, elfFighter, wall, empty>;
 
 struct cave{
-    public:
-        cave(){}
-        void outputCave(){
-            int currentY = 0;
-            for(const auto& feature : caveFeatures){
-                if(feature.first.second > currentY){
-                    currentY = feature.first.second;
-                    std::cout << "\n";
-                }
-                if(feature.second.isWall){
-                    std::cout << "#"; 
-                } else {
-                    if(goblinArmy.getItem(feature.first).isReal()){
-                        std::cout << "G";
-                    } else if(elfArmy.getItem(feature.first).isReal()){
-                        std::cout << "E";
-                    } else {
-                        std::cout << ".";
-                    }
-                }
+    cave(){}
+    void outputCave(){
+        int currentY = 0;
+        for(const auto& feature : caveFeatures){
+            if(feature.first.second > currentY){
+                currentY = feature.first.second;
+                std::cout << "\n";
             }
-            std::cout << "\n";
+            std::visit(overloaded {
+                [](const goblinFighter&) {std::cout << "G";},
+                [](const elfFighter&) {std::cout << "E";},
+                [](const wall&) {std::cout << "#";},
+                [](const empty&) {std::cout << ".";}
+            }, feature.second);
         }
-        grid::grid<caveFeature> caveFeatures;
-        grid::grid<goblinFighter> goblinArmy;
-        grid::grid<elfFighter> elfArmy;
+        std::cout << "\n";
+    }
+
+    grid::grid<caveSpot> caveFeatures;
 };
 
 cave parseOutCave(std::vector<std::string> caveLines){
@@ -63,15 +46,13 @@ cave parseOutCave(std::vector<std::string> caveLines){
         for(const auto& character : line){
             grid::Point curPoint(x,y);
             if(character == '#'){
-                output.caveFeatures.setItem(curPoint, caveFeature(true));
+                output.caveFeatures.setItem(curPoint, wall());
             } else if(character == 'G'){
-                output.caveFeatures.setItem(curPoint, caveFeature(false));
-                output.goblinArmy.setItem(curPoint, goblinFighter(true));
+                output.caveFeatures.setItem(curPoint, goblinFighter());
             } else if(character == 'E'){
-                output.caveFeatures.setItem(curPoint, caveFeature(false));
-                output.elfArmy.setItem(curPoint, elfFighter(true));
+                output.caveFeatures.setItem(curPoint, elfFighter());
             } else if(character == '.') {
-                output.caveFeatures.setItem(curPoint, caveFeature(false));
+                output.caveFeatures.setItem(curPoint, empty());
             }
             ++x;
         }
