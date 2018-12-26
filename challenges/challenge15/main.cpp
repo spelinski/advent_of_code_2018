@@ -3,9 +3,15 @@
 #include <iostream>
 #include <variant>
 
-class goblinFighter{};
+struct goblinFighter{
+    goblinFighter():alreadyMoved(false){}
+    bool alreadyMoved;
+};
 
-class elfFighter{};
+struct elfFighter{
+    elfFighter():alreadyMoved(false){}
+    bool alreadyMoved;
+};
 
 struct wall{};
 
@@ -33,6 +39,33 @@ struct cave{
             }, feature.second);
         }
         std::cout << "\n";
+    }
+
+    void peformTurn(){
+        grid::grid<caveSpot> tempCaveFeatures = caveFeatures;
+        for(const auto& feature : caveFeatures){
+            caveSpot tempCaveSpot = tempCaveFeatures.getItem(feature.first);
+            std::visit(overloaded {
+                //This isn't meant to work yet
+                [&tempCaveFeatures, &feature](goblinFighter& gf){
+                    if(!gf.alreadyMoved){
+                        gf.alreadyMoved = true;
+                        tempCaveFeatures.setItem(grid::Point(feature.first.first+1, feature.first.second),gf);
+                        tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
+                    }
+                },
+                [&tempCaveFeatures, &feature](elfFighter& ef){
+                    if(!ef.alreadyMoved){
+                        ef.alreadyMoved = true;
+                        tempCaveFeatures.setItem(grid::Point(feature.first.first+1, feature.first.second),ef);
+                        tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
+                    }
+                },
+                [](const wall&){},
+                [](const empty&){}
+            }, tempCaveSpot);
+        }
+        caveFeatures = tempCaveFeatures;
     }
 
     grid::grid<caveSpot> caveFeatures;
@@ -65,6 +98,9 @@ cave parseOutCave(std::vector<std::string> caveLines){
 int main(){
     std::vector<std::string> caveLines = fileParse::storeEachLine("./challenges/challenge15/input.txt");
     cave myCave = parseOutCave(caveLines);
+    myCave.outputCave();
+    myCave.peformTurn();
+    std::cout << "\n\n";
     myCave.outputCave();
     return 0;
 }
