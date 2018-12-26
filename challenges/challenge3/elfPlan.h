@@ -70,7 +70,7 @@ namespace elfPlan {
             }
 
             int getInchesDuplicated(){
-                return usageGrid.performCountWithConditional([](auto inch){return (inch.second > 1);});
+                return std::count_if(usageGrid.begin(), usageGrid.end(), [](auto inch){return (inch.second > 1);});
             }
 
         private:

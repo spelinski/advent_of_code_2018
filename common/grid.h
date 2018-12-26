@@ -30,10 +30,6 @@ namespace grid{
             T getItem(Point retrievalPoint){
                 return gridMap[retrievalPoint];
             }
-            template<typename FT>
-            int performCountWithConditional(FT conditional){
-                return std::count_if(gridMap.begin(), gridMap.end(), conditional);
-            }
             int getSize(){
                 return gridMap.size();
             }
