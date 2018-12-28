@@ -30,7 +30,7 @@ namespace grid{
             T getItem(Point retrievalPoint){
                 return gridMap[retrievalPoint];
             }
-            int getSize(){
+            int getSize() const{
                 return gridMap.size();
             }
             typename std::map<Point, T>::iterator begin(){
@@ -45,6 +45,10 @@ namespace grid{
             typename std::map<Point, T>::const_iterator end() const{
                 return gridMap.end();
             }
+            typename std::map<Point, T>::const_reverse_iterator rbegin() const{
+                return gridMap.rbegin();
+            }
+
         private:
             std::map<Point, T, checkPointOrdering> gridMap;
     };

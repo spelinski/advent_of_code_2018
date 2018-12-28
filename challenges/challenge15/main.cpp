@@ -1,7 +1,20 @@
 #include "grid.h"
 #include "fileParser.h"
 #include <iostream>
+#include <list>
 #include <variant>
+
+enum fighterType {
+    GOBLIN,
+    ELF
+};
+
+enum direction {
+    UP = 'U' ,
+    DOWN = 'D',
+    LEFT = 'L',
+    RIGHT = 'R'
+};
 
 struct goblinFighter{
     goblinFighter():alreadyMoved(false){}
@@ -17,10 +30,61 @@ struct wall{};
 
 struct empty{};
 
+struct path{
+    path(int maxDistance):distance(maxDistance){}
+    std::list<direction> steps;
+    int distance;
+};
+
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 using caveSpot = std::variant<goblinFighter, elfFighter, wall, empty>;
+
+bool isValid(grid::Point testPoint, grid::grid<caveSpot> encounterMap){
+    return (testPoint.first >= 0) && (testPoint.second >= 0) && (testPoint.first <= encounterMap.rbegin()->first.first) && (testPoint.second <= encounterMap.rbegin()->first.second);
+}
+
+struct pathNode{
+    int distance;
+    direction currentDirection;
+    pathNode* previousNode;
+};
+
+void findShortestPath(grid::Point startPoint, grid::Point, const grid::grid<caveSpot>& encounterMap){
+    grid::grid<bool> visited;
+    int distance = 0;
+    for(const auto& spot : encounterMap){
+        visited.setItem(spot.first, false);
+    }
+
+    std::list<grid::Point> currentQueue;
+    currentQueue.push_back(startPoint);
+
+    while(!currentQueue.empty()){
+        auto currentPoint = currentQueue.front();
+        currentQueue.pop_front();
+        
+        //up
+        if(isValid(grid::Point(currentPoint.first,currentPoint.second-1),encounterMap) && !visited.getItem(currentPoint)){
+        }
+    }
+
+    std::cout << "distance: " << distance << "\n";
+}
+
+path findPathToNearestElf(const grid::Point& startPoint, const grid::grid<caveSpot>& encounterMap){
+    path minimumPath(encounterMap.getSize()+1);
+    for(const auto& spot : encounterMap){
+        if(std::holds_alternative<elfFighter>(spot.second)){
+            findShortestPath(startPoint, spot.first, encounterMap);
+            /*if(tempPath.distance < minimumPath.distance){
+                minimumPath = tempPath;
+            }*/
+        }
+    }
+    return minimumPath;
+}
 
 struct cave{
     cave(){}
@@ -50,6 +114,7 @@ struct cave{
                 [&tempCaveFeatures, &feature](goblinFighter& gf){
                     if(!gf.alreadyMoved){
                         gf.alreadyMoved = true;
+                        findPathToNearestElf(feature.first, tempCaveFeatures);
                         tempCaveFeatures.setItem(grid::Point(feature.first.first+1, feature.first.second),gf);
                         tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
                     }
