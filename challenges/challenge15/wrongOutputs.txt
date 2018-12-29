@@ -1,3 +1,11 @@
 turns taken: 152
 Health Left: 2357
-Outcome: 358264 
+Outcome: 358264
+
+turns taken: 144
+Health Left: 2390
+Outcome: 344160
+
+..............................
+346574
+..............................
