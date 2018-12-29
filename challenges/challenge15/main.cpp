@@ -71,9 +71,8 @@ pathNode createNode(pathNode currentPoint, grid::Point nextPoint, grid::grid<boo
     return tempNode;
 }
 
-std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap, int currentShortPath){
+pathNode findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap){
     grid::grid<bool> visited;
-    std::list<pathNode> returnPath;
     for(const auto& spot : encounterMap){
         visited.setItem(spot.first, false);
     }
@@ -89,15 +88,14 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         auto currentPoint = currentQueue.front();
         currentQueue.pop_front();
         if(checkForEnemy(enemyType, encounterMap.getItem(currentPoint.location))){
-            currentShortPath = currentPoint.distance;
-            returnPath.push_back(currentPoint);
+            return currentPoint;
         }
 
         grid::Point nextPoint(currentPoint.location.first,currentPoint.location.second-1);
         //up
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::UP);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
                 currentQueue.push_back(tempNode);
             }
         }
@@ -106,7 +104,7 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         //left
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::LEFT);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
                 currentQueue.push_back(tempNode);
             }
         }
@@ -115,7 +113,7 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         //right
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::RIGHT);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
                 currentQueue.push_back(tempNode);
             }
  
@@ -125,39 +123,21 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         //down
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::DOWN);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
                 currentQueue.push_back(tempNode);
             }
  
         } 
     }
-    return returnPath;
+    return currentSpot;
 }
 
 pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
-    pathNode minimumPath;
-    minimumPath.distance = 0;
-    int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
-    std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::ELF, encounterMap, distanceCompare);
-    for(const auto& tempNode : tempNodeList){
-        if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
-            minimumPath = tempNode;
-        }
-    }
-    return minimumPath;
+    return findShortestPath(startPoint, fighterType::ELF, encounterMap);
 }
 
 pathNode findPathToNearestGoblin(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
-    pathNode minimumPath;
-    minimumPath.distance = 0;
-    int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
-    std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::GOBLIN, encounterMap, distanceCompare);
-    for(const auto& tempNode : tempNodeList){
-        if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
-            minimumPath = tempNode;
-        }
-    }
-    return minimumPath;
+    return findShortestPath(startPoint, fighterType::GOBLIN, encounterMap);
 }
 
 struct cave{
