@@ -254,7 +254,7 @@ struct cave{
                         grid::Point lowestHealthPoint;
                         caveSpot lowestHealthEnemy = empty();
                         caveSpot upSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second-1});
-                        if(std::holds_alternative<elfFighter>(upSpot)){
+                        if(checkForEnemy(fighterType::ELF, upSpot)){
                             elfFighter ef = std::get<elfFighter>(upSpot);
                             if(ef.health < health){
                                 health = ef.health;
@@ -263,7 +263,7 @@ struct cave{
                             }
                         }
                         caveSpot leftSpot = tempCaveFeatures.getItem({myNewLocation.first-1, myNewLocation.second});
-                        if(std::holds_alternative<elfFighter>(leftSpot)){
+                        if(checkForEnemy(fighterType::ELF,leftSpot)){
                             elfFighter ef = std::get<elfFighter>(leftSpot);
                             if(ef.health < health){
                                 health = ef.health;
@@ -272,7 +272,7 @@ struct cave{
                             }
                         }
                         caveSpot rightSpot = tempCaveFeatures.getItem({myNewLocation.first+1, myNewLocation.second});
-                        if(std::holds_alternative<elfFighter>(rightSpot)){
+                        if(checkForEnemy(fighterType::ELF, rightSpot)){
                             elfFighter ef = std::get<elfFighter>(rightSpot);
                             if(ef.health < health){
                                 health = ef.health;
@@ -281,7 +281,7 @@ struct cave{
                             }
                         }
                         caveSpot downSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second+1});
-                        if(std::holds_alternative<elfFighter>(downSpot)){
+                        if(checkForEnemy(fighterType::ELF, downSpot)){
                             elfFighter ef = std::get<elfFighter>(downSpot);
                             if(ef.health < health){
                                 health = ef.health;
@@ -291,10 +291,8 @@ struct cave{
                         }
 
                         if(std::holds_alternative<elfFighter>(lowestHealthEnemy)){
-
                             elfFighter ef = std::get<elfFighter>(lowestHealthEnemy);
                             ef.health -= gf.attackPower;
-                            //std::cout << "Elf loc: " << pathToElf.location.first << "," << pathToElf.location.second << " : Health: " << ef.health << "\n";
                             if(ef.health > 0){
                                 tempCaveFeatures.setItem(lowestHealthPoint, ef);
                             } else {
@@ -329,7 +327,7 @@ struct cave{
                         grid::Point lowestHealthPoint;
                         caveSpot lowestHealthEnemy = empty();
                         caveSpot upSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second-1});
-                        if(std::holds_alternative<goblinFighter>(upSpot)){
+                        if(checkForEnemy(fighterType::GOBLIN,upSpot)){
                             goblinFighter gf = std::get<goblinFighter>(upSpot);
                             if(gf.health < health){
                                 health = gf.health;
@@ -338,7 +336,7 @@ struct cave{
                             }
                         }
                         caveSpot leftSpot = tempCaveFeatures.getItem({myNewLocation.first-1, myNewLocation.second});
-                        if(std::holds_alternative<goblinFighter>(leftSpot)){
+                        if(checkForEnemy(fighterType::GOBLIN,leftSpot)){
                             goblinFighter gf = std::get<goblinFighter>(leftSpot);
                             if(gf.health < health){
                                 health = gf.health;
@@ -347,7 +345,7 @@ struct cave{
                             }
                         }
                         caveSpot rightSpot = tempCaveFeatures.getItem({myNewLocation.first+1, myNewLocation.second});
-                        if(std::holds_alternative<goblinFighter>(rightSpot)){
+                        if(checkForEnemy(fighterType::GOBLIN,rightSpot)){
                             goblinFighter gf = std::get<goblinFighter>(rightSpot);
                             if(gf.health < health){
                                 health = gf.health;
@@ -356,7 +354,7 @@ struct cave{
                             }
                         }
                         caveSpot downSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second+1});
-                        if(std::holds_alternative<goblinFighter>(downSpot)){
+                        if(checkForEnemy(fighterType::GOBLIN,downSpot)){
                             goblinFighter gf = std::get<goblinFighter>(downSpot);
                             if(gf.health < health){
                                 health = gf.health;
