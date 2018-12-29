@@ -233,7 +233,7 @@ struct cave{
                         gf.alreadyMoved = true;
                         pathNode pathToElf = findPathToNearestElf(feature.first, tempCaveFeatures);
                         grid::Point myNewLocation;
-                        tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
+                        tempCaveFeatures.setItem(feature.first,empty());
                         if(pathToElf.firstStep == direction::UP && pathToElf.distance > 1){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
                             tempCaveFeatures.setItem(myNewLocation, gf);
@@ -305,7 +305,7 @@ struct cave{
                     if(!ef.alreadyMoved){
                         ef.alreadyMoved = true;
                         pathNode pathToGoblin = findPathToNearestGoblin(feature.first, tempCaveFeatures);
-                        tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
+                        tempCaveFeatures.setItem(feature.first,empty());
                         grid::Point myNewLocation;
                         if(pathToGoblin.firstStep == direction::UP && pathToGoblin.distance > 1){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
@@ -367,7 +367,6 @@ struct cave{
 
                             goblinFighter gf = std::get<goblinFighter>(lowestHealthEnemy);
                             gf.health -= ef.attackPower;
-                            //std::cout << "Elf loc: " << pathToElf.location.first << "," << pathToElf.location.second << " : Health: " << ef.health << "\n";
                             if(gf.health > 0){
                                 tempCaveFeatures.setItem(lowestHealthPoint, gf);
                             } else {
