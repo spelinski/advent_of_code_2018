@@ -58,6 +58,19 @@ bool checkForEnemy(fighterType enemyType, caveSpot currentSpot){
     }
 }
 
+pathNode createNode(pathNode currentPoint, grid::Point nextPoint, grid::grid<bool>& visited, direction newDirection){
+    pathNode tempNode;
+    tempNode.distance = currentPoint.distance + 1;
+    if(currentPoint.distance > 0){
+        tempNode.firstStep = currentPoint.firstStep;
+    } else {
+        tempNode.firstStep = newDirection;
+    }
+    tempNode.location = nextPoint;
+    visited.setItem(tempNode.location, true);
+    return tempNode;
+}
+
 std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap, int currentShortPath){
     grid::grid<bool> visited;
     std::list<pathNode> returnPath;
@@ -83,32 +96,16 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         grid::Point nextPoint(currentPoint.location.first,currentPoint.location.second-1);
         //up
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-                pathNode tempNode;
-                tempNode.distance = currentPoint.distance + 1;
-                if(currentPoint.distance > 0){
-                    tempNode.firstStep = currentPoint.firstStep;
-                } else {
-                    tempNode.firstStep = direction::UP;
-                }
-                tempNode.location = nextPoint;
-                visited.setItem(tempNode.location, true);
-                if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
-                    currentQueue.push_back(tempNode);
-                }
+            pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::UP);
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+                currentQueue.push_back(tempNode);
+            }
         }
 
         nextPoint = {currentPoint.location.first-1,currentPoint.location.second};
         //left
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-            pathNode tempNode;
-            tempNode.distance = currentPoint.distance + 1;
-            if(currentPoint.distance > 0){
-                tempNode.firstStep = currentPoint.firstStep;
-            } else {
-                tempNode.firstStep = direction::LEFT;
-            }
-            tempNode.location = nextPoint;
-            visited.setItem(tempNode.location, true);
+            pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::LEFT);
             if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
                 currentQueue.push_back(tempNode);
             }
@@ -117,35 +114,21 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
         nextPoint = {currentPoint.location.first+1,currentPoint.location.second};
         //right
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-            pathNode tempNode;
-            tempNode.distance = currentPoint.distance + 1;
-            if(currentPoint.distance > 0){
-                tempNode.firstStep = currentPoint.firstStep;
-            } else {
-                tempNode.firstStep = direction::RIGHT;
-            }
-            tempNode.location = nextPoint;
-            visited.setItem(tempNode.location, true);
+            pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::RIGHT);
             if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
                 currentQueue.push_back(tempNode);
             }
+ 
         }
 
         nextPoint = {currentPoint.location.first, currentPoint.location.second+1};
         //down
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-            pathNode tempNode;
-            tempNode.distance = currentPoint.distance + 1;
-            if(currentPoint.distance > 0){
-                tempNode.firstStep = currentPoint.firstStep;
-            } else {
-                tempNode.firstStep = direction::DOWN;
-            }
-            tempNode.location = nextPoint;
-            visited.setItem(tempNode.location, true);
+            pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::DOWN);
             if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
                 currentQueue.push_back(tempNode);
             }
+ 
         } 
     }
     return returnPath;
