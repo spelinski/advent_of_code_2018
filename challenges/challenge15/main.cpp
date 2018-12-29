@@ -50,8 +50,17 @@ struct pathNode{
     direction firstStep;
 };
 
-pathNode findShortestPath(grid::Point startPoint, grid::Point endPoint, grid::grid<caveSpot>& encounterMap){
+bool checkForEnemy(fighterType enemyType, caveSpot currentSpot){
+    if(enemyType == fighterType::ELF){
+        return std::holds_alternative<elfFighter>(currentSpot);
+    } else {
+        return std::holds_alternative<goblinFighter>(currentSpot);
+    }
+}
+
+std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap, int currentShortPath){
     grid::grid<bool> visited;
+    std::list<pathNode> returnPath;
     for(const auto& spot : encounterMap){
         visited.setItem(spot.first, false);
     }
@@ -66,8 +75,9 @@ pathNode findShortestPath(grid::Point startPoint, grid::Point endPoint, grid::gr
     while(!currentQueue.empty()){
         auto currentPoint = currentQueue.front();
         currentQueue.pop_front();
-        if(currentPoint.location == endPoint) {
-            return currentPoint;
+        if(checkForEnemy(enemyType, encounterMap.getItem(currentPoint.location))){
+            currentShortPath = currentPoint.distance;
+            returnPath.push_back(currentPoint);
         }
 
         grid::Point nextPoint(currentPoint.location.first,currentPoint.location.second-1);
@@ -82,7 +92,7 @@ pathNode findShortestPath(grid::Point startPoint, grid::Point endPoint, grid::gr
                 }
                 tempNode.location = nextPoint;
                 visited.setItem(tempNode.location, true);
-                if((tempNode.location == endPoint) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))){
+                if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
                     currentQueue.push_back(tempNode);
                 }
         }
@@ -99,7 +109,7 @@ pathNode findShortestPath(grid::Point startPoint, grid::Point endPoint, grid::gr
             }
             tempNode.location = nextPoint;
             visited.setItem(tempNode.location, true);
-            if(tempNode.location == endPoint || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))){
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
                 currentQueue.push_back(tempNode);
             }
         }
@@ -107,49 +117,53 @@ pathNode findShortestPath(grid::Point startPoint, grid::Point endPoint, grid::gr
         nextPoint = {currentPoint.location.first+1,currentPoint.location.second};
         //right
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-                pathNode tempNode;
-                tempNode.distance = currentPoint.distance + 1;
-                if(currentPoint.distance > 0){
-                    tempNode.firstStep = currentPoint.firstStep;
-                } else {
-                    tempNode.firstStep = direction::RIGHT;
-                }
-                tempNode.location = nextPoint;
-                visited.setItem(tempNode.location, true);
-                if(tempNode.location == endPoint || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))){
-                    currentQueue.push_back(tempNode);
-                }
+            pathNode tempNode;
+            tempNode.distance = currentPoint.distance + 1;
+            if(currentPoint.distance > 0){
+                tempNode.firstStep = currentPoint.firstStep;
+            } else {
+                tempNode.firstStep = direction::RIGHT;
+            }
+            tempNode.location = nextPoint;
+            visited.setItem(tempNode.location, true);
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+                currentQueue.push_back(tempNode);
+            }
         }
 
         nextPoint = {currentPoint.location.first, currentPoint.location.second+1};
         //down
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
-                pathNode tempNode;
-                tempNode.distance = currentPoint.distance + 1;
-                if(currentPoint.distance > 0){
-                    tempNode.firstStep = currentPoint.firstStep;
-                } else {
-                    tempNode.firstStep = direction::DOWN;
-                }
-                tempNode.location = nextPoint;
-                visited.setItem(tempNode.location, true);
-                if(tempNode.location == endPoint || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))){
-                    currentQueue.push_back(tempNode);
-                }
+            pathNode tempNode;
+            tempNode.distance = currentPoint.distance + 1;
+            if(currentPoint.distance > 0){
+                tempNode.firstStep = currentPoint.firstStep;
+            } else {
+                tempNode.firstStep = direction::DOWN;
+            }
+            tempNode.location = nextPoint;
+            visited.setItem(tempNode.location, true);
+            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location))) && tempNode.distance <= currentShortPath){
+                currentQueue.push_back(tempNode);
+            }
         } 
     }
-    return currentSpot;
+    return returnPath;
 }
 
 pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
     pathNode minimumPath;
     minimumPath.distance = 0;
-    for(const auto& spot : encounterMap){
-        if(std::holds_alternative<elfFighter>(spot.second)){
-            pathNode tempNode = findShortestPath(startPoint, spot.first, encounterMap);
-            if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && tempNode.distance > 0){
-                minimumPath = tempNode;
-            }
+    int minHealth = 900;
+    int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
+    std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::ELF, encounterMap, distanceCompare);
+    for(const auto& tempNode : tempNodeList){
+        if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
+            minimumPath = tempNode;
+            minHealth = std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health;
+        } else if(((tempNode.distance == 1) || (tempNode.distance == 2)) && (std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health < minHealth)){
+            minimumPath = tempNode;
+            minHealth = std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health;
         }
     }
     return minimumPath;
@@ -158,12 +172,16 @@ pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot
 pathNode findPathToNearestGoblin(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
     pathNode minimumPath;
     minimumPath.distance = 0;
-    for(const auto& spot : encounterMap){
-        if(std::holds_alternative<goblinFighter>(spot.second)){
-            pathNode tempNode = findShortestPath(startPoint, spot.first, encounterMap);
-            if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && tempNode.distance > 0){
-                minimumPath = tempNode;
-            }
+    int minHealth = 900;
+    int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
+    std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::GOBLIN, encounterMap, distanceCompare);
+    for(const auto& tempNode : tempNodeList){
+        if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
+            minimumPath = tempNode;
+            minHealth = std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health;
+        } else if(((tempNode.distance == 1) || (tempNode.distance == 2)) && (std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health < minHealth)){
+            minimumPath = tempNode;
+            minHealth = std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health;
         }
     }
     return minimumPath;
@@ -186,6 +204,37 @@ struct cave{
             }, feature.second);
         }
         std::cout << "\n";
+    }
+
+    int amountOfHealthLeftTotal(){
+        int totalHealth = 0;
+        for(const auto& caveSpot : caveFeatures){
+            std::visit( overloaded {
+                [&totalHealth](const goblinFighter& gf){
+                    totalHealth += gf.health;
+                },
+                [&totalHealth](const elfFighter& ef){
+                    totalHealth += ef.health;
+                },
+                [](const wall&){},
+                [](const empty&){}
+            }, caveSpot.second);
+        }
+        return totalHealth;
+    }
+
+    bool isBattleDone(){
+        bool goblinsExist = false;
+        bool elvesExist = false;
+        for(const auto& caveSpot : caveFeatures){
+            if(std::holds_alternative<goblinFighter>(caveSpot.second)){
+                goblinsExist = true;
+            } else if(std::holds_alternative<elfFighter>(caveSpot.second)){
+                elvesExist = true;
+            }
+            if(goblinsExist && elvesExist){return false;}
+        }
+        return true;
     }
 
     void peformTurn(){
@@ -213,12 +262,12 @@ struct cave{
                         if(pathToElf.distance == 1 || pathToElf.distance == 2){
                             elfFighter ef = std::get<elfFighter>(tempCaveFeatures.getItem(pathToElf.location));
                             ef.health -= gf.attackPower;
+                            //std::cout << "Elf loc: " << pathToElf.location.first << "," << pathToElf.location.second << " : Health: " << ef.health << "\n";
                             if(ef.health > 0){
                                 tempCaveFeatures.setItem(pathToElf.location, ef);
                             } else {
                                 tempCaveFeatures.setItem(pathToElf.location, empty());
                             }
-                            std::cout << "elf health: " << ef.health << "\n";
                         }
                     }
                 },
@@ -238,7 +287,16 @@ struct cave{
                         } else {
                             tempCaveFeatures.setItem(feature.first,ef);
                         }
-
+                        if(pathToGoblin.distance == 1 || pathToGoblin.distance == 2){
+                            goblinFighter gf = std::get<goblinFighter>(tempCaveFeatures.getItem(pathToGoblin.location));
+                            gf.health -= ef.attackPower;
+                            //std::cout << "Goblin loc: " << pathToGoblin.location.first << "," << pathToGoblin.location.second << " : Health: " << gf.health << "\n";
+                            if(gf.health > 0){
+                                tempCaveFeatures.setItem(pathToGoblin.location, gf);
+                            } else {
+                                tempCaveFeatures.setItem(pathToGoblin.location, empty());
+                            }
+                        }
                     }
                 },
                 [](const wall&){},
@@ -296,11 +354,24 @@ int main(){
     std::vector<std::string> caveLines = fileParse::storeEachLine("./challenges/challenge15/input.txt");
     cave myCave = parseOutCave(caveLines);
     myCave.outputCave();
-    for(int i=0; i < 47; ++i){
+    int turnsCompleted = 0;
+    while(!myCave.isBattleDone()){
         myCave.peformTurn();
+        //if(turnsCompleted % 20 == 0){
+            std::cout << "turn: " << turnsCompleted << "\n";
+            myCave.outputCave();
+        //}
+        ++turnsCompleted;
     }
+    //Says don't count the turn combat ends
+    --turnsCompleted;
     std::cout << "\n\n";
     myCave.outputCave();
+    std::cout << "turns taken: " << turnsCompleted << "\n";
+    int healthLeft = myCave.amountOfHealthLeftTotal();
+    std::cout << "Health Left: " << healthLeft << "\n";
+    int outcomeScore = healthLeft * turnsCompleted;
+    std::cout << "Outcome: " << outcomeScore << "\n";
 
     /*myCave.peformTurn();
     std::cout << "\n\n";
