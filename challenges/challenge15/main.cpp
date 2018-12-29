@@ -137,16 +137,11 @@ std::list<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTyp
 pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
     pathNode minimumPath;
     minimumPath.distance = 0;
-    int minHealth = 900;
     int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
     std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::ELF, encounterMap, distanceCompare);
     for(const auto& tempNode : tempNodeList){
         if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
             minimumPath = tempNode;
-            minHealth = std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health;
-        } else if(((tempNode.distance == 1) || (tempNode.distance == 2)) && (std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health < minHealth)){
-            minimumPath = tempNode;
-            minHealth = std::get<elfFighter>(encounterMap.getItem(tempNode.location)).health;
         }
     }
     return minimumPath;
@@ -155,16 +150,11 @@ pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot
 pathNode findPathToNearestGoblin(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
     pathNode minimumPath;
     minimumPath.distance = 0;
-    int minHealth = 900;
     int distanceCompare = (minimumPath.distance > 0) ? (minimumPath.distance) : (900);
     std::list<pathNode> tempNodeList = findShortestPath(startPoint, fighterType::GOBLIN, encounterMap, distanceCompare);
     for(const auto& tempNode : tempNodeList){
         if((tempNode.distance < minimumPath.distance || minimumPath.distance==0) && (tempNode.distance > 0)){
             minimumPath = tempNode;
-            minHealth = std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health;
-        } else if(((tempNode.distance == 1) || (tempNode.distance == 2)) && (std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health < minHealth)){
-            minimumPath = tempNode;
-            minHealth = std::get<goblinFighter>(encounterMap.getItem(tempNode.location)).health;
         }
     }
     return minimumPath;
@@ -174,14 +164,26 @@ struct cave{
     cave(){}
     void outputCave(){
         int currentY = 0;
+        std::list<int> health;
         for(const auto& feature : caveFeatures){
             if(feature.first.second > currentY){
                 currentY = feature.first.second;
+                for(const auto& heroHealth : health){
+                    std::cout << " (" << heroHealth <<") ";
+                }
+                health.clear();
                 std::cout << "\n";
             }
+
             std::visit(overloaded {
-                [](const goblinFighter&) {std::cout << "G";},
-                [](const elfFighter&) {std::cout << "E";},
+                [&health](const goblinFighter& gf) {
+                    health.push_back(gf.health);
+                    std::cout << "G";
+                },
+                [&health](const elfFighter& ef) {
+                    health.push_back(ef.health);
+                    std::cout << "E";
+                },
                 [](const wall&) {std::cout << "#";},
                 [](const empty&) {std::cout << ".";}
             }, feature.second);
@@ -230,26 +232,73 @@ struct cave{
                     if(!gf.alreadyMoved){
                         gf.alreadyMoved = true;
                         pathNode pathToElf = findPathToNearestElf(feature.first, tempCaveFeatures);
+                        grid::Point myNewLocation;
                         tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
                         if(pathToElf.firstStep == direction::UP && pathToElf.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first,feature.first.second-1),gf);
+                            myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
+                            tempCaveFeatures.setItem(myNewLocation, gf);
                         } else if(pathToElf.firstStep == direction::LEFT && pathToElf.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first-1,feature.first.second),gf);
+                            myNewLocation = grid::Point(feature.first.first-1,feature.first.second);
+                            tempCaveFeatures.setItem(myNewLocation, gf);
                         } else if(pathToElf.firstStep == direction::RIGHT && pathToElf.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first+1,feature.first.second),gf);
+                            myNewLocation = grid::Point(feature.first.first+1,feature.first.second);
+                            tempCaveFeatures.setItem(myNewLocation, gf);
                         } else if(pathToElf.firstStep == direction::DOWN && pathToElf.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first,feature.first.second+1),gf);
+                            myNewLocation = grid::Point(feature.first.first,feature.first.second+1);
+                            tempCaveFeatures.setItem(myNewLocation, gf);
                         } else {
+                            myNewLocation = feature.first;
                             tempCaveFeatures.setItem(feature.first,gf);
                         }
-                        if(pathToElf.distance == 1 || pathToElf.distance == 2){
-                            elfFighter ef = std::get<elfFighter>(tempCaveFeatures.getItem(pathToElf.location));
+                        int health = 900;
+                        grid::Point lowestHealthPoint;
+                        caveSpot lowestHealthEnemy = empty();
+                        caveSpot upSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second-1});
+                        if(std::holds_alternative<elfFighter>(upSpot)){
+                            elfFighter ef = std::get<elfFighter>(upSpot);
+                            if(ef.health < health){
+                                health = ef.health;
+                                lowestHealthEnemy = upSpot;
+                                lowestHealthPoint = {myNewLocation.first, myNewLocation.second-1};
+                            }
+                        }
+                        caveSpot leftSpot = tempCaveFeatures.getItem({myNewLocation.first-1, myNewLocation.second});
+                        if(std::holds_alternative<elfFighter>(leftSpot)){
+                            elfFighter ef = std::get<elfFighter>(leftSpot);
+                            if(ef.health < health){
+                                health = ef.health;
+                                lowestHealthEnemy = leftSpot;
+                                lowestHealthPoint = {myNewLocation.first-1, myNewLocation.second};
+                            }
+                        }
+                        caveSpot rightSpot = tempCaveFeatures.getItem({myNewLocation.first+1, myNewLocation.second});
+                        if(std::holds_alternative<elfFighter>(rightSpot)){
+                            elfFighter ef = std::get<elfFighter>(rightSpot);
+                            if(ef.health < health){
+                                health = ef.health;
+                                lowestHealthEnemy = rightSpot;
+                                lowestHealthPoint = {myNewLocation.first+1, myNewLocation.second};
+                            }
+                        }
+                        caveSpot downSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second+1});
+                        if(std::holds_alternative<elfFighter>(downSpot)){
+                            elfFighter ef = std::get<elfFighter>(downSpot);
+                            if(ef.health < health){
+                                health = ef.health;
+                                lowestHealthEnemy = downSpot;
+                                lowestHealthPoint = {myNewLocation.first, myNewLocation.second+1};
+                            }
+                        }
+
+                        if(std::holds_alternative<elfFighter>(lowestHealthEnemy)){
+
+                            elfFighter ef = std::get<elfFighter>(lowestHealthEnemy);
                             ef.health -= gf.attackPower;
                             //std::cout << "Elf loc: " << pathToElf.location.first << "," << pathToElf.location.second << " : Health: " << ef.health << "\n";
                             if(ef.health > 0){
-                                tempCaveFeatures.setItem(pathToElf.location, ef);
+                                tempCaveFeatures.setItem(lowestHealthPoint, ef);
                             } else {
-                                tempCaveFeatures.setItem(pathToElf.location, empty());
+                                tempCaveFeatures.setItem(lowestHealthPoint, empty());
                             }
                         }
                     }
@@ -259,25 +308,72 @@ struct cave{
                         ef.alreadyMoved = true;
                         pathNode pathToGoblin = findPathToNearestGoblin(feature.first, tempCaveFeatures);
                         tempCaveFeatures.setItem(grid::Point(feature.first.first, feature.first.second),empty());
+                        grid::Point myNewLocation;
                         if(pathToGoblin.firstStep == direction::UP && pathToGoblin.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first,feature.first.second-1),ef);
+                            myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
+                            tempCaveFeatures.setItem(myNewLocation,ef);
                         } else if(pathToGoblin.firstStep == direction::LEFT && pathToGoblin.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first-1,feature.first.second),ef);
+                            myNewLocation = grid::Point(feature.first.first-1,feature.first.second);
+                            tempCaveFeatures.setItem(myNewLocation,ef);
                         } else if(pathToGoblin.firstStep == direction::RIGHT && pathToGoblin.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first+1,feature.first.second),ef);
+                            myNewLocation = grid::Point(feature.first.first+1,feature.first.second);
+                            tempCaveFeatures.setItem(myNewLocation,ef);
                         } else if(pathToGoblin.firstStep == direction::DOWN && pathToGoblin.distance > 1){
-                            tempCaveFeatures.setItem(grid::Point(feature.first.first,feature.first.second+1),ef);
+                            myNewLocation = grid::Point(feature.first.first,feature.first.second+1);
+                            tempCaveFeatures.setItem(myNewLocation,ef);
                         } else {
+                            myNewLocation = feature.first;
                             tempCaveFeatures.setItem(feature.first,ef);
                         }
-                        if(pathToGoblin.distance == 1 || pathToGoblin.distance == 2){
-                            goblinFighter gf = std::get<goblinFighter>(tempCaveFeatures.getItem(pathToGoblin.location));
+                        int health = 900;
+                        grid::Point lowestHealthPoint;
+                        caveSpot lowestHealthEnemy = empty();
+                        caveSpot upSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second-1});
+                        if(std::holds_alternative<goblinFighter>(upSpot)){
+                            goblinFighter gf = std::get<goblinFighter>(upSpot);
+                            if(gf.health < health){
+                                health = gf.health;
+                                lowestHealthEnemy = upSpot;
+                                lowestHealthPoint = {myNewLocation.first, myNewLocation.second-1};
+                            }
+                        }
+                        caveSpot leftSpot = tempCaveFeatures.getItem({myNewLocation.first-1, myNewLocation.second});
+                        if(std::holds_alternative<goblinFighter>(leftSpot)){
+                            goblinFighter gf = std::get<goblinFighter>(leftSpot);
+                            if(gf.health < health){
+                                health = gf.health;
+                                lowestHealthEnemy = leftSpot;
+                                lowestHealthPoint = {myNewLocation.first-1, myNewLocation.second};
+                            }
+                        }
+                        caveSpot rightSpot = tempCaveFeatures.getItem({myNewLocation.first+1, myNewLocation.second});
+                        if(std::holds_alternative<goblinFighter>(rightSpot)){
+                            goblinFighter gf = std::get<goblinFighter>(rightSpot);
+                            if(gf.health < health){
+                                health = gf.health;
+                                lowestHealthEnemy = rightSpot;
+                                lowestHealthPoint = {myNewLocation.first+1, myNewLocation.second};
+                            }
+                        }
+                        caveSpot downSpot = tempCaveFeatures.getItem({myNewLocation.first, myNewLocation.second+1});
+                        if(std::holds_alternative<goblinFighter>(downSpot)){
+                            goblinFighter gf = std::get<goblinFighter>(downSpot);
+                            if(gf.health < health){
+                                health = gf.health;
+                                lowestHealthEnemy = downSpot;
+                                lowestHealthPoint = {myNewLocation.first, myNewLocation.second+1};
+                            }
+                        }
+
+                        if(std::holds_alternative<goblinFighter>(lowestHealthEnemy)){
+
+                            goblinFighter gf = std::get<goblinFighter>(lowestHealthEnemy);
                             gf.health -= ef.attackPower;
-                            //std::cout << "Goblin loc: " << pathToGoblin.location.first << "," << pathToGoblin.location.second << " : Health: " << gf.health << "\n";
+                            //std::cout << "Elf loc: " << pathToElf.location.first << "," << pathToElf.location.second << " : Health: " << ef.health << "\n";
                             if(gf.health > 0){
-                                tempCaveFeatures.setItem(pathToGoblin.location, gf);
+                                tempCaveFeatures.setItem(lowestHealthPoint, gf);
                             } else {
-                                tempCaveFeatures.setItem(pathToGoblin.location, empty());
+                                tempCaveFeatures.setItem(lowestHealthPoint, empty());
                             }
                         }
                     }
@@ -340,10 +436,8 @@ int main(){
     int turnsCompleted = 0;
     while(!myCave.isBattleDone()){
         myCave.peformTurn();
-        //if(turnsCompleted % 20 == 0){
-            std::cout << "turn: " << turnsCompleted << "\n";
-            myCave.outputCave();
-        //}
+        std::cout << "turn: " << turnsCompleted << "\n";
+        myCave.outputCave();
         ++turnsCompleted;
     }
     //Says don't count the turn combat ends
@@ -355,17 +449,6 @@ int main(){
     std::cout << "Health Left: " << healthLeft << "\n";
     int outcomeScore = healthLeft * turnsCompleted;
     std::cout << "Outcome: " << outcomeScore << "\n";
-
-    /*myCave.peformTurn();
-    std::cout << "\n\n";
-    myCave.outputCave();
-    myCave.peformTurn();
-    std::cout << "\n\n";
-    myCave.outputCave();
-    myCave.peformTurn();
-    std::cout << "\n\n";
-    myCave.outputCave();*/
-
 
     return 0;
 }
