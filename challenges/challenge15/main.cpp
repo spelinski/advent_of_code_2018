@@ -71,8 +71,9 @@ pathNode createNode(pathNode currentPoint, grid::Point nextPoint, grid::grid<boo
     return tempNode;
 }
 
-pathNode findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap){
+grid::grid<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyType, grid::grid<caveSpot>& encounterMap){
     grid::grid<bool> visited;
+    grid::grid<pathNode> returnTargets;
     for(const auto& spot : encounterMap){
         visited.setItem(spot.first, false);
     }
@@ -84,18 +85,19 @@ pathNode findShortestPath(grid::Point startPoint,fighterType enemyType, grid::gr
     currentQueue.push_back(currentSpot);
     visited.setItem(startPoint, true);
 
+    int currentDistance = 900;
+
     while(!currentQueue.empty()){
         auto currentPoint = currentQueue.front();
         currentQueue.pop_front();
-        if(checkForEnemy(enemyType, encounterMap.getItem(currentPoint.location))){
-            return currentPoint;
-        }
-
         grid::Point nextPoint(currentPoint.location.first,currentPoint.location.second-1);
         //up
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::UP);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+                currentDistance = currentPoint.distance;
+                returnTargets.setItem(currentPoint.location, currentPoint);
+            } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
             }
         }
@@ -104,16 +106,23 @@ pathNode findShortestPath(grid::Point startPoint,fighterType enemyType, grid::gr
         //left
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::LEFT);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+                currentDistance = currentPoint.distance;
+                returnTargets.setItem(currentPoint.location, currentPoint);
+            } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
             }
+
         }
 
         nextPoint = {currentPoint.location.first+1,currentPoint.location.second};
         //right
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::RIGHT);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+                currentDistance = currentPoint.distance;
+                returnTargets.setItem(currentPoint.location, currentPoint);
+            } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
             }
  
@@ -123,21 +132,26 @@ pathNode findShortestPath(grid::Point startPoint,fighterType enemyType, grid::gr
         //down
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::DOWN);
-            if((checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) || std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+                currentDistance = currentPoint.distance;
+                returnTargets.setItem(currentPoint.location, currentPoint);
+            } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
-            }
- 
+            } 
         } 
     }
-    return currentSpot;
+    if(returnTargets.getSize() == 0){
+        returnTargets.setItem(currentSpot.location, currentSpot);
+    }
+    return returnTargets;
 }
 
 pathNode findPathToNearestElf(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
-    return findShortestPath(startPoint, fighterType::ELF, encounterMap);
+    return findShortestPath(startPoint, fighterType::ELF, encounterMap).begin()->second;
 }
 
 pathNode findPathToNearestGoblin(const grid::Point& startPoint, grid::grid<caveSpot>& encounterMap){
-    return findShortestPath(startPoint, fighterType::GOBLIN, encounterMap);
+    return findShortestPath(startPoint, fighterType::GOBLIN, encounterMap).begin()->second;
 }
 
 struct cave{
@@ -214,16 +228,16 @@ struct cave{
                         pathNode pathToElf = findPathToNearestElf(feature.first, tempCaveFeatures);
                         grid::Point myNewLocation;
                         tempCaveFeatures.setItem(feature.first,empty());
-                        if(pathToElf.firstStep == direction::UP && pathToElf.distance > 1){
+                        if(pathToElf.firstStep == direction::UP && pathToElf.distance > 0){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
                             tempCaveFeatures.setItem(myNewLocation, gf);
-                        } else if(pathToElf.firstStep == direction::LEFT && pathToElf.distance > 1){
+                        } else if(pathToElf.firstStep == direction::LEFT && pathToElf.distance > 0){
                             myNewLocation = grid::Point(feature.first.first-1,feature.first.second);
                             tempCaveFeatures.setItem(myNewLocation, gf);
-                        } else if(pathToElf.firstStep == direction::RIGHT && pathToElf.distance > 1){
+                        } else if(pathToElf.firstStep == direction::RIGHT && pathToElf.distance > 0){
                             myNewLocation = grid::Point(feature.first.first+1,feature.first.second);
                             tempCaveFeatures.setItem(myNewLocation, gf);
-                        } else if(pathToElf.firstStep == direction::DOWN && pathToElf.distance > 1){
+                        } else if(pathToElf.firstStep == direction::DOWN && pathToElf.distance > 0){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second+1);
                             tempCaveFeatures.setItem(myNewLocation, gf);
                         } else {
@@ -287,16 +301,16 @@ struct cave{
                         pathNode pathToGoblin = findPathToNearestGoblin(feature.first, tempCaveFeatures);
                         tempCaveFeatures.setItem(feature.first,empty());
                         grid::Point myNewLocation;
-                        if(pathToGoblin.firstStep == direction::UP && pathToGoblin.distance > 1){
+                        if(pathToGoblin.firstStep == direction::UP && pathToGoblin.distance > 0){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second-1);
                             tempCaveFeatures.setItem(myNewLocation,ef);
-                        } else if(pathToGoblin.firstStep == direction::LEFT && pathToGoblin.distance > 1){
+                        } else if(pathToGoblin.firstStep == direction::LEFT && pathToGoblin.distance > 0){
                             myNewLocation = grid::Point(feature.first.first-1,feature.first.second);
                             tempCaveFeatures.setItem(myNewLocation,ef);
-                        } else if(pathToGoblin.firstStep == direction::RIGHT && pathToGoblin.distance > 1){
+                        } else if(pathToGoblin.firstStep == direction::RIGHT && pathToGoblin.distance > 0){
                             myNewLocation = grid::Point(feature.first.first+1,feature.first.second);
                             tempCaveFeatures.setItem(myNewLocation,ef);
-                        } else if(pathToGoblin.firstStep == direction::DOWN && pathToGoblin.distance > 1){
+                        } else if(pathToGoblin.firstStep == direction::DOWN && pathToGoblin.distance > 0){
                             myNewLocation = grid::Point(feature.first.first,feature.first.second+1);
                             tempCaveFeatures.setItem(myNewLocation,ef);
                         } else {
