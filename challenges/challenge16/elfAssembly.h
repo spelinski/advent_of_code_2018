@@ -2,6 +2,9 @@
 #include<vector>
 
 namespace elfAssembly{
+
+    typedef std::array<int,4> (*assemblyFunction)(std::array<int,4>,int,int,int);
+
     std::array<int,4> addr(std::array<int,4> currentRegs, int A, int B, int C){
         std::array<int,4> outputRegs = currentRegs;
         outputRegs[C] = currentRegs[A] + currentRegs[B];
@@ -97,9 +100,9 @@ namespace elfAssembly{
         outputRegs[C] = (currentRegs[A] == currentRegs[B]) ? 1 : 0;
         return outputRegs;
     }
-    template<typename Function>
-    std::vector<Function> getAllElfAssemblyFunctions(){
-        std::vector<Function> allFunctions = {addr,addi,mulr,muli,banr,bani,borr,bori,setr,seti,gtir,gtri,gtrr,eqir,eqri,eqrr};
+
+    std::vector<assemblyFunction> getAllElfAssemblyFunctions(){
+        std::vector<assemblyFunction> allFunctions = {addr,addi,mulr,muli,banr,bani,borr,bori,setr,seti,gtir,gtri,gtrr,eqir,eqri,eqrr};
         return allFunctions;
     }
 }
