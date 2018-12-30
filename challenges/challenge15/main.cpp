@@ -45,9 +45,11 @@ bool isValid(grid::Point testPoint, grid::grid<caveSpot> encounterMap){
 }
 
 struct pathNode{
+    pathNode():isReal(false){}
     grid::Point location;
     int distance;
     direction firstStep;
+    bool isReal;
 };
 
 bool checkForEnemy(fighterType enemyType, caveSpot currentSpot){
@@ -67,6 +69,7 @@ pathNode createNode(pathNode currentPoint, grid::Point nextPoint, grid::grid<boo
         tempNode.firstStep = newDirection;
     }
     tempNode.location = nextPoint;
+    tempNode.isReal = true;
     visited.setItem(tempNode.location, true);
     return tempNode;
 }
@@ -82,6 +85,7 @@ grid::grid<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTy
     pathNode currentSpot;
     currentSpot.location = startPoint;
     currentSpot.distance = 0;
+    currentSpot.isReal = true;
     currentQueue.push_back(currentSpot);
     visited.setItem(startPoint, true);
 
@@ -94,7 +98,7 @@ grid::grid<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTy
         //up
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::UP);
-            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) && currentPoint.distance <= currentDistance){
                 currentDistance = currentPoint.distance;
                 returnTargets.setItem(currentPoint.location, currentPoint);
             } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
@@ -106,38 +110,36 @@ grid::grid<pathNode> findShortestPath(grid::Point startPoint,fighterType enemyTy
         //left
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::LEFT);
-            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) && currentPoint.distance <= currentDistance){
                 currentDistance = currentPoint.distance;
                 returnTargets.setItem(currentPoint.location, currentPoint);
             } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
-            }
-
+            } 
         }
 
         nextPoint = {currentPoint.location.first+1,currentPoint.location.second};
         //right
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::RIGHT);
-            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) && currentPoint.distance <= currentDistance){
                 currentDistance = currentPoint.distance;
                 returnTargets.setItem(currentPoint.location, currentPoint);
             } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
             }
- 
         }
 
         nextPoint = {currentPoint.location.first, currentPoint.location.second+1};
         //down
         if(isValid(nextPoint,encounterMap) && (!visited.getItem(nextPoint))){
             pathNode tempNode = createNode(currentPoint, nextPoint, visited, direction::DOWN);
-            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location))){
+            if(checkForEnemy(enemyType, encounterMap.getItem(tempNode.location)) && currentPoint.distance <= currentDistance){
                 currentDistance = currentPoint.distance;
                 returnTargets.setItem(currentPoint.location, currentPoint);
             } else if(std::holds_alternative<empty>(encounterMap.getItem(tempNode.location)) && tempNode.distance <= currentDistance){
                 currentQueue.push_back(tempNode);
-            } 
+            }
         } 
     }
     if(returnTargets.getSize() == 0){
