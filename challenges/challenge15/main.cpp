@@ -395,6 +395,55 @@ struct cave{
         caveFeatures = tempCaveFeatures;
     }
 
+    int getElfCount(){
+        int count = 0;
+        for(const auto& spot : caveFeatures){
+            if(std::holds_alternative<elfFighter>(spot.second)){
+                ++count;
+            }
+        }
+        return count;
+    }
+    void setElfAttackPower(int currentAtk){
+        for(const auto& spot : caveFeatures){
+            if(std::holds_alternative<elfFighter>(spot.second)){
+                elfFighter ef = std::get<elfFighter>(spot.second);
+                ef.attackPower = currentAtk;
+                caveFeatures.setItem(spot.first, ef);
+            }
+
+        }
+    }
+    std::vector<int> getLowestNeededAttack(){
+        std::vector<int> returnVector;
+        int elfCount = getElfCount();
+        int currentAttackPower = 4;
+        bool solutionFound = false;
+        grid::grid<caveSpot> initialCave = caveFeatures;
+        while(!solutionFound){
+            setElfAttackPower(currentAttackPower);
+            int currentElfCount = elfCount;
+            int turnsCompleted = 0;
+            while(!isBattleDone()){
+                peformTurn();
+                std::cout << "p2 turn: " << turnsCompleted << "\n";
+                outputCave();
+                ++turnsCompleted;
+                currentElfCount = getElfCount();
+                if(currentElfCount < elfCount){break;}
+            }
+            if(currentElfCount == elfCount){
+                solutionFound = true;
+                returnVector.push_back(currentAttackPower);
+                returnVector.push_back(--turnsCompleted);
+            } else {
+                ++currentAttackPower;
+                caveFeatures = initialCave;
+            }
+        }
+        return returnVector;
+    }
+
     grid::grid<caveSpot> caveFeatures;
 };
 
@@ -426,17 +475,29 @@ int main(){
     std::vector<std::string> caveLines = fileParse::storeEachLine("./challenges/challenge15/input.txt");
     cave myCave = parseOutCave(caveLines);
     myCave.outputCave();
-    int turnsCompleted = 0;
-    while(!myCave.isBattleDone()){
+    //int turnsCompleted = 0;
+    /*while(!myCave.isBattleDone()){
         myCave.peformTurn();
         std::cout << "turn: " << turnsCompleted << "\n";
         myCave.outputCave();
         ++turnsCompleted;
-    }
+    }*/
     //Says don't count the turn combat ends
-    --turnsCompleted;
-    std::cout << "\n\n";
-    myCave.outputCave();
+    //--turnsCompleted;
+    //std::cout << "\n\n";
+    //myCave.outputCave();
+    //std::cout << "turns taken: " << turnsCompleted << "\n";
+    //int healthLeft = myCave.amountOfHealthLeftTotal();
+    //std::cout << "Health Left: " << healthLeft << "\n";
+    ///int outcomeScore = healthLeft * turnsCompleted;
+    //std::cout << "Outcome: " << outcomeScore << "\n";
+
+    std::cout << "\n\npart 2\n";
+    std::vector<int> roundTwoResult = myCave.getLowestNeededAttack();
+    for(const auto& result : roundTwoResult){
+        std::cout << result << "\n";
+    }
+    int turnsCompleted = roundTwoResult[1];
     std::cout << "turns taken: " << turnsCompleted << "\n";
     int healthLeft = myCave.amountOfHealthLeftTotal();
     std::cout << "Health Left: " << healthLeft << "\n";
