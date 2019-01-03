@@ -62,6 +62,7 @@ std::map<int, elfAssembly::assemblyFunction> figureOutOpCodeToAssembly(std::vect
     int numberOfSingles = 0;
     std::map<int, std::set<elfAssembly::assemblyFunction> > tempMap = currentPossibilities;
     int newNumberOfSingles = getNumberOfSingles(currentPossibilities);
+    //remove all the figured out functions from the other opcodes
     while(newNumberOfSingles > numberOfSingles){
         numberOfSingles = newNumberOfSingles;
         for(const auto& opCode : currentPossibilities){
