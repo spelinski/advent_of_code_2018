@@ -9,6 +9,12 @@ struct nothing{};
 struct openGround{};
 struct trees{};
 struct lumberyard{};
+struct fieldCounters{
+    fieldCounters():treeCount(0),openCount(0),lumberyardCount(0){};
+    int treeCount;
+    int openCount;
+    int lumberyardCount;
+};
 
 template<class... Ts> struct overloaded : Ts... {using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
@@ -33,116 +39,75 @@ class fields {
             }
             outputStream << "\n";
         }
-        void printCounts(std::ostream& outputStream){
-            int open = 0;
-            int tree = 0;
-            int lumber = 0;
+        fieldCounters getCounts(){
+            fieldCounters myCounters;
             for(const auto& optionPair : landmass){
                 std::visit(overloaded {
-                    [&open](const openGround&){++open;},
-                    [&tree](const trees&){++tree;},
-                    [&lumber](const lumberyard&){++lumber;},
+                    [&myCounters](const openGround&){myCounters.openCount++;},
+                    [&myCounters](const trees&){myCounters.treeCount++;},
+                    [&myCounters](const lumberyard&){myCounters.lumberyardCount++;},
                     [](const nothing&){}
                 },optionPair.second);
             }
-            outputStream << "open ground: " << open << ", trees: " << tree << ", lumberyards: " << lumber << "\n";
+
+            return myCounters;
+        }
+        void visitAdjacent(grid::Point location, grid::grid<fieldOptions>& copyOfLand){
+            if(std::holds_alternative<nothing>(landmass.getItem(location))){
+                return;
+            } else if(std::holds_alternative<openGround>(copyOfLand.getItem(location))){
+                minuteCounters.openCount++;
+            }else if(std::holds_alternative<trees>(copyOfLand.getItem(location))){
+                minuteCounters.treeCount++;
+            }else if(std::holds_alternative<lumberyard>(copyOfLand.getItem(location))){
+                minuteCounters.lumberyardCount++;
+            }
         }
         void incrementMinute(){
             grid::grid<fieldOptions> copyOfLand = landmass;
             for(const auto& optionPair : copyOfLand){
-                int adjacentTrees = 0;
-                int adjacentOpen = 0;
-                int adjacentLumberyards = 0;
+                minuteCounters.openCount = 0;
+                minuteCounters.treeCount = 0;
+                minuteCounters.lumberyardCount = 0;
                 int currentX = optionPair.first.first;
                 int currentY = optionPair.first.second;
+                if(std::holds_alternative<nothing>(landmass.getItem({currentX,currentY}))){
+                    continue;
+                }
                 //check upper left
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX-1,currentY-1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX-1,currentY-1}));
-                }
+                visitAdjacent({currentX-1,currentY-1}, copyOfLand);
                 //check upper middle
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX,currentY-1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX,currentY-1}));
-                }
+                visitAdjacent({currentX,currentY-1}, copyOfLand);
                 //check upper right
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX+1,currentY-1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX+1,currentY-1}));
-                }
+                visitAdjacent({currentX+1,currentY-1}, copyOfLand);
                 //check middle left
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX-1,currentY}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX-1,currentY}));
-                }
+                visitAdjacent({currentX-1,currentY}, copyOfLand);
                 //check middle right
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX+1,currentY}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX+1,currentY}));
-                }
+                visitAdjacent({currentX+1,currentY}, copyOfLand);
                 //check lower left
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX-1,currentY+1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX-1,currentY+1}));
-                }
+                visitAdjacent({currentX-1,currentY+1}, copyOfLand);
                 //check lower middle
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX,currentY+1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX,currentY+1}));
-                }
+                visitAdjacent({currentX,currentY+1}, copyOfLand);
                 //check lower right
-                if(!std::holds_alternative<nothing>(landmass.getItem({currentX+1,currentY+1}))){
-                    std::visit(overloaded {
-                        [&adjacentOpen](const openGround&){++adjacentOpen;},
-                        [&adjacentTrees] (const trees&){++adjacentTrees;},
-                        [&adjacentLumberyards](const lumberyard&){++adjacentLumberyards;},
-                        [](const nothing&){}
-                    },copyOfLand.getItem({currentX+1,currentY+1}));
-                }
+                visitAdjacent({currentX+1,currentY+1}, copyOfLand);
                 if(std::holds_alternative<openGround>(optionPair.second)){
-                    if(adjacentTrees >= 3){
+                    if(minuteCounters.treeCount >= 3){
                         landmass.setItem(optionPair.first, trees());
                     }
                 } else if(std::holds_alternative<trees>(optionPair.second)){
-                    if(adjacentLumberyards >= 3){
+                    if(minuteCounters.lumberyardCount >= 3){
                         landmass.setItem(optionPair.first, lumberyard());
                     }
                 } else if(std::holds_alternative<lumberyard>(optionPair.second)){
-                    if(adjacentLumberyards < 1 || adjacentTrees < 1){
+                    if(minuteCounters.lumberyardCount < 1 || minuteCounters.treeCount < 1){
                         landmass.setItem(optionPair.first, openGround());
                     }
                 }
             }
         }
         grid::grid<fieldOptions> landmass;
+    private:
+        fieldCounters minuteCounters;
 };
 
 fields parseOutLumberField(std::vector<std::string> input){
@@ -168,19 +133,17 @@ fields parseOutLumberField(std::vector<std::string> input){
     return myField;
 }
 
-
-
-
 int main(){
     std::vector<std::string> myInput = fileParse::storeEachLine("./challenges/challenge18/input.txt");
     fields myLumber = parseOutLumberField(myInput);
-    myLumber.printFields(std::cout);
-    myLumber.printCounts(std::cout);
     int numberOfMinutes = 10;
     for(int i = 1; i <= numberOfMinutes; ++i){
         myLumber.incrementMinute();
     }
     myLumber.printFields(std::cout);
     myLumber.printCounts(std::cout);
+    fieldCounters myCounters = myLumber.getCounts();
+    int resourceValue = myCounters.treeCount * myCounters.lumberyardCount;
+    std::cout << "Resource Value: " << resourceValue << "\n";
     return 0;
 }
